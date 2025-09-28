@@ -210,6 +210,7 @@ func mapaccess2_faststr(t *MapType, m *Map, ky string) (unsafe.Pointer, bool)
 func runtime_mapassign_faststr(t *MapType, m *Map, s string) unsafe.Pointer
 
 //go:nosplit
+//go:linkname StrMapGet gointernals.StrMapGet
 func StrMapGet(m *Map, mType *MapType, key string) unsafe.Pointer {
 	return mapaccess1_faststr(mType, m, key)
 }
@@ -235,12 +236,14 @@ func StrMapTryGetAs[K comparable, V any](m *Map, mType *MapType, key string) (V,
 }
 
 //go:nosplit
+//go:linkname StrMapSet gointernals.StrMapSet
 func StrMapSet(m *Map, mType *MapType, key string, value unsafe.Pointer) {
 	dst := runtime_mapassign_faststr(mType, m, key)
 	typedmemmove(mType.Elem, dst, value)
 }
 
 //go:nosplit
+//go:linkname MapClone gointernals.MapClone
 func MapClone(m *Map, mType *MapType) any {
 	return mapclone(MapToAny(m, mType))
 }
@@ -251,6 +254,7 @@ func MapCloneAs[K comparable, V any](m *Map, mType *MapType) map[K]V {
 }
 
 //go:nosplit
+//go:linkname MapClear gointernals.MapClear
 func MapClear(m *Map, mType *MapType) {
 	reflect_mapclear(mType, m)
 }

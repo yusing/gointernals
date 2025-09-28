@@ -43,6 +43,7 @@ func slicecopy(toPtr unsafe.Pointer, toLen int, fromPtr unsafe.Pointer, fromLen 
 func typedslicecopy(typ *abi.Type, dstPtr unsafe.Pointer, dstLen int, srcPtr unsafe.Pointer, srcLen int)
 
 //go:nosplit
+//go:linkname SliceClone gointernals.SliceClone
 func SliceClone(src *Slice, elemType *abi.Type) *Slice {
 	newSlice := makeslice(elemType, src.len, src.len)
 	if !elemType.CanPointer() {
