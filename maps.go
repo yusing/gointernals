@@ -237,8 +237,8 @@ func StrMapTryGetAs[K comparable, V any](m *Map, mType *MapType, key string) (V,
 
 //go:nosplit
 //go:linkname StrMapSet gointernals.StrMapSet
-func StrMapSet(m *Map, mType *MapType, key string, value unsafe.Pointer) {
-	dst := runtime_mapassign_faststr(mType, m, key)
+func StrMapSet(m *Map, mType *MapType, key *String, value unsafe.Pointer) {
+	dst := runtime_mapassign_faststr(mType, m, StringPack(key))
 	typedmemmove(mType.Elem, dst, value)
 }
 
