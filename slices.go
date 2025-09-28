@@ -20,7 +20,7 @@ type SliceType struct {
 	Elem *abi.Type
 }
 
-type CloneSliceFunc = func(src *Slice, elemType *abi.Type) *Slice
+type SliceCloneFunc = func(src *Slice, elemType *abi.Type) *Slice
 
 var width = unsafe.Sizeof(int(0))
 

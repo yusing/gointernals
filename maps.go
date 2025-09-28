@@ -187,7 +187,7 @@ type MapTable struct {
 	groups unsafe.Pointer
 }
 
-type SetMapFunc = func(m *Map, mType *MapType, key string, value unsafe.Pointer)
+type StrMapSetFunc = func(m *Map, mType *MapType, key *String, value unsafe.Pointer)
 
 //go:linkname mapclone maps.clone
 //go:noescape
