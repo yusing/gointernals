@@ -100,3 +100,252 @@ func TestSliceClone(t *testing.T) {
 		}
 	})
 }
+
+func TestSliceCloneInto(t *testing.T) {
+	// Test case 1: Destination has sufficient capacity (need <= 0) - non-pointer type
+	t.Run("sufficient capacity int", func(t *testing.T) {
+		src := []int{1, 2, 3}
+		srcSlice, elemType := SliceUnpack(src)
+
+		dst := make([]int, 0, 5) // capacity 5, length 0
+		dstSlice, _ := SliceUnpack(dst)
+
+		SliceCloneInto(dstSlice, srcSlice, elemType)
+
+		// Convert back to check results
+		result := *(*[]int)(unsafe.Pointer(dstSlice))
+
+		if len(result) != 3 {
+			t.Errorf("Expected length 3, got %d", len(result))
+		}
+		if cap(result) != 5 {
+			t.Errorf("Expected capacity 5, got %d", cap(result))
+		}
+		for i, expected := range []int{1, 2, 3} {
+			if result[i] != expected {
+				t.Errorf("At index %d: expected %d, got %d", i, expected, result[i])
+			}
+		}
+	})
+
+	// Test case 2: Destination has sufficient capacity (need <= 0) - pointer type
+	t.Run("sufficient capacity string", func(t *testing.T) {
+		src := []string{"hello", "world"}
+		srcSlice, elemType := SliceUnpack(src)
+
+		dst := make([]string, 0, 5) // capacity 5, length 0
+		dstSlice, _ := SliceUnpack(dst)
+
+		SliceCloneInto(dstSlice, srcSlice, elemType)
+
+		// Convert back to check results
+		result := *(*[]string)(unsafe.Pointer(dstSlice))
+
+		if len(result) != 2 {
+			t.Errorf("Expected length 2, got %d", len(result))
+		}
+		if cap(result) != 5 {
+			t.Errorf("Expected capacity 5, got %d", cap(result))
+		}
+		for i, expected := range []string{"hello", "world"} {
+			if result[i] != expected {
+				t.Errorf("At index %d: expected %s, got %s", i, expected, result[i])
+			}
+		}
+	})
+
+	// Test case 3: Destination needs growth (need > 0 and dst.ptr != nil) - non-pointer type
+	t.Run("needs growth int", func(t *testing.T) {
+		src := []int{1, 2, 3, 4, 5}
+		srcSlice, elemType := SliceUnpack(src)
+
+		dst := make([]int, 0, 2) // capacity 2, needs growth
+		dstSlice, _ := SliceUnpack(dst)
+
+		SliceCloneInto(dstSlice, srcSlice, elemType)
+
+		// Convert back to check results
+		result := *(*[]int)(unsafe.Pointer(dstSlice))
+
+		if len(result) != 5 {
+			t.Errorf("Expected length 5, got %d", len(result))
+		}
+		if cap(result) < 5 {
+			t.Errorf("Expected capacity at least 5, got %d", cap(result))
+		}
+		for i, expected := range []int{1, 2, 3, 4, 5} {
+			if result[i] != expected {
+				t.Errorf("At index %d: expected %d, got %d", i, expected, result[i])
+			}
+		}
+	})
+
+	// Test case 4: Destination needs growth (need > 0 and dst.ptr != nil) - pointer type
+	t.Run("needs growth string", func(t *testing.T) {
+		src := []string{"a", "b", "c", "d"}
+		srcSlice, elemType := SliceUnpack(src)
+
+		dst := make([]string, 0, 2) // capacity 2, needs growth
+		dstSlice, _ := SliceUnpack(dst)
+
+		SliceCloneInto(dstSlice, srcSlice, elemType)
+
+		// Convert back to check results
+		result := *(*[]string)(unsafe.Pointer(dstSlice))
+
+		if len(result) != 4 {
+			t.Errorf("Expected length 4, got %d", len(result))
+		}
+		if cap(result) < 4 {
+			t.Errorf("Expected capacity at least 4, got %d", cap(result))
+		}
+		for i, expected := range []string{"a", "b", "c", "d"} {
+			if result[i] != expected {
+				t.Errorf("At index %d: expected %s, got %s", i, expected, result[i])
+			}
+		}
+	})
+
+	// Test case 5: Destination is nil/empty (dst.ptr == nil) - non-pointer type
+	t.Run("nil destination int", func(t *testing.T) {
+		src := []int{10, 20, 30}
+		srcSlice, elemType := SliceUnpack(src)
+
+		var dst []int
+		dstSlice, _ := SliceUnpack(dst)
+
+		SliceCloneInto(dstSlice, srcSlice, elemType)
+
+		// Convert back to check results
+		result := *(*[]int)(unsafe.Pointer(dstSlice))
+
+		if len(result) != 3 {
+			t.Errorf("Expected length 3, got %d", len(result))
+		}
+		if cap(result) != 3 {
+			t.Errorf("Expected capacity 3, got %d", cap(result))
+		}
+		for i, expected := range []int{10, 20, 30} {
+			if result[i] != expected {
+				t.Errorf("At index %d: expected %d, got %d", i, expected, result[i])
+			}
+		}
+	})
+
+	// Test case 6: Destination is nil/empty (dst.ptr == nil) - pointer type
+	t.Run("nil destination string", func(t *testing.T) {
+		src := []string{"x", "y"}
+		srcSlice, elemType := SliceUnpack(src)
+
+		var dst []string
+		dstSlice, _ := SliceUnpack(dst)
+
+		SliceCloneInto(dstSlice, srcSlice, elemType)
+
+		// Convert back to check results
+		result := *(*[]string)(unsafe.Pointer(dstSlice))
+
+		if len(result) != 2 {
+			t.Errorf("Expected length 2, got %d", len(result))
+		}
+		if cap(result) != 2 {
+			t.Errorf("Expected capacity 2, got %d", cap(result))
+		}
+		for i, expected := range []string{"x", "y"} {
+			if result[i] != expected {
+				t.Errorf("At index %d: expected %s, got %s", i, expected, result[i])
+			}
+		}
+	})
+
+	// Test case 7: Empty source slice
+	t.Run("empty source", func(t *testing.T) {
+		src := []int{}
+		srcSlice, elemType := SliceUnpack(src)
+
+		dst := make([]int, 0, 5)
+		dstSlice, _ := SliceUnpack(dst)
+
+		SliceCloneInto(dstSlice, srcSlice, elemType)
+
+		// Convert back to check results
+		result := *(*[]int)(unsafe.Pointer(dstSlice))
+
+		if len(result) != 0 {
+			t.Errorf("Expected length 0, got %d", len(result))
+		}
+		if cap(result) != 5 {
+			t.Errorf("Expected capacity 5, got %d", cap(result))
+		}
+	})
+
+	// Test case 8: Struct slice (contains pointers)
+	t.Run("struct slice", func(t *testing.T) {
+		type TestStruct struct {
+			Name string
+			ID   int
+		}
+
+		src := []TestStruct{{Name: "Alice", ID: 1}, {Name: "Bob", ID: 2}}
+		srcSlice, elemType := SliceUnpack(src)
+
+		dst := make([]TestStruct, 0, 1) // needs growth
+		dstSlice, _ := SliceUnpack(dst)
+
+		SliceCloneInto(dstSlice, srcSlice, elemType)
+
+		// Convert back to check results
+		result := *(*[]TestStruct)(unsafe.Pointer(dstSlice))
+
+		if len(result) != 2 {
+			t.Errorf("Expected length 2, got %d", len(result))
+		}
+		if cap(result) < 2 {
+			t.Errorf("Expected capacity at least 2, got %d", cap(result))
+		}
+
+		if result[0].Name != "Alice" || result[0].ID != 1 {
+			t.Errorf("Expected {Alice 1}, got %+v", result[0])
+		}
+		if result[1].Name != "Bob" || result[1].ID != 2 {
+			t.Errorf("Expected {Bob 2}, got %+v", result[1])
+		}
+	})
+
+	// Test case 9: Pointer slice
+	t.Run("pointer slice", func(t *testing.T) {
+		val1, val2 := 42, 84
+		src := []*int{&val1, &val2}
+		srcSlice, elemType := SliceUnpack(src)
+
+		var dst []*int
+		dstSlice, _ := SliceUnpack(dst)
+
+		SliceCloneInto(dstSlice, srcSlice, elemType)
+
+		// Convert back to check results
+		result := *(*[]*int)(unsafe.Pointer(dstSlice))
+
+		if len(result) != 2 {
+			t.Errorf("Expected length 2, got %d", len(result))
+		}
+		if cap(result) != 2 {
+			t.Errorf("Expected capacity 2, got %d", cap(result))
+		}
+
+		if result[0] == nil || *result[0] != 42 {
+			t.Errorf("Expected pointer to 42, got %v", result[0])
+		}
+		if result[1] == nil || *result[1] != 84 {
+			t.Errorf("Expected pointer to 84, got %v", result[1])
+		}
+
+		// Verify it's a shallow copy (same pointers)
+		if result[0] != &val1 {
+			t.Errorf("Expected same pointer reference for val1")
+		}
+		if result[1] != &val2 {
+			t.Errorf("Expected same pointer reference for val2")
+		}
+	})
+}

@@ -22,8 +22,6 @@ type SliceType struct {
 
 type SliceCloneFunc = func(src *Slice, elemType *abi.Type) *Slice
 
-var width = unsafe.Sizeof(int(0))
-
 //go:linkname growslice runtime.growslice
 //go:noescape
 func growslice(oldPtr unsafe.Pointer, newLen, oldCap, num int, et *abi.Type) Slice
@@ -47,7 +45,7 @@ func typedslicecopy(typ *abi.Type, dstPtr unsafe.Pointer, dstLen int, srcPtr uns
 func SliceClone(src *Slice, elemType *abi.Type) *Slice {
 	newSlice := makeslice(elemType, src.len, src.len)
 	if !elemType.CanPointer() {
-		slicecopy(newSlice, src.len, src.ptr, src.len, width)
+		slicecopy(newSlice, src.len, src.ptr, src.len, elemType.Size)
 	} else {
 		typedslicecopy(elemType, newSlice, src.len, src.ptr, src.len)
 	}
@@ -59,13 +57,34 @@ func SliceClone(src *Slice, elemType *abi.Type) *Slice {
 }
 
 //go:nosplit
+//go:linkname SliceCloneInto gointernals.SliceCloneInto
+func SliceCloneInto(dst *Slice, src *Slice, elemType *abi.Type) {
+	need := src.len - dst.cap
+	if need <= 0 { // can fit in dst
+		dst.len = src.len
+	} else if dst.ptr != nil { // can grow dst
+		grown := growslice(dst.ptr, src.len, dst.cap, need, elemType)
+		*dst = grown
+	} else { // dst is nil, assign new slice
+		dst.ptr = makeslice(elemType, src.len, src.len)
+		dst.len = src.len
+		dst.cap = src.len
+	}
+
+	if !elemType.CanPointer() {
+		slicecopy(dst.ptr, src.len, src.ptr, src.len, elemType.Size)
+	} else {
+		typedslicecopy(elemType, dst.ptr, src.len, src.ptr, src.len)
+	}
+}
+
+//go:nosplit
 func SliceCloneAs[T any](src *Slice, elemType *abi.Type) []T {
 	return *(*[]T)(unsafe.Pointer(SliceClone(src, elemType)))
 }
 
 //go:nosplit
 func SliceUnpack[T any](s []T) (*Slice, *abi.Type) {
-	sAny := any(s)
-	eface := EfaceOf(&sAny)
+	eface := EfaceOf(s)
 	return (*Slice)(unsafe.Pointer(&s)), (*SliceType)(unsafe.Pointer(eface.Type)).Elem
 }

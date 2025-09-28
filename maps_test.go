@@ -68,7 +68,7 @@ func TestStrMapSet(t *testing.T) {
 		mtable, mtype := MapUnpack(m)
 
 		value := "test_value"
-		StrMapSet(mtable, mtype, "test_key", unsafe.Pointer(&value))
+		StrMapSet(mtable, mtype, StringUnpack("test_key"), unsafe.Pointer(&value))
 
 		if val, ok := m["test_key"]; !ok {
 			t.Error("Key 'test_key' was not set in map")
@@ -84,7 +84,7 @@ func TestStrMapSet(t *testing.T) {
 		mtable, mtype := MapUnpack(m)
 
 		value := 42
-		StrMapSet(mtable, mtype, "int_key", unsafe.Pointer(&value))
+		StrMapSet(mtable, mtype, StringUnpack("int_key"), unsafe.Pointer(&value))
 
 		if val, ok := m["int_key"]; !ok {
 			t.Error("Key 'int_key' was not set in map")
@@ -105,7 +105,7 @@ func TestStrMapSet(t *testing.T) {
 		mtable, mtype := MapUnpack(m)
 
 		value := TestStruct{Name: "Alice", Age: 30}
-		StrMapSet(mtable, mtype, "person", unsafe.Pointer(&value))
+		StrMapSet(mtable, mtype, StringUnpack("person"), unsafe.Pointer(&value))
 
 		if val, ok := m["person"]; !ok {
 			t.Error("Key 'person' was not set in map")
@@ -121,7 +121,7 @@ func TestStrMapSet(t *testing.T) {
 		mtable, mtype := MapUnpack(m)
 
 		value := "empty_key_value"
-		StrMapSet(mtable, mtype, "", unsafe.Pointer(&value))
+		StrMapSet(mtable, mtype, StringUnpack(""), unsafe.Pointer(&value))
 
 		if val, ok := m[""]; !ok {
 			t.Error("Empty key was not set in map")
@@ -138,7 +138,7 @@ func TestStrMapSet(t *testing.T) {
 		mtable, mtype := MapUnpack(m)
 
 		value := "new_value"
-		StrMapSet(mtable, mtype, "existing", unsafe.Pointer(&value))
+		StrMapSet(mtable, mtype, StringUnpack("existing"), unsafe.Pointer(&value))
 
 		if val, ok := m["existing"]; !ok {
 			t.Error("Key 'existing' was not found in map")
