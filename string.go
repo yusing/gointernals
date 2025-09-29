@@ -26,3 +26,10 @@ func StringUnpack(s string) *String {
 func StringPack(s *String) string {
 	return *(*string)(unsafe.Pointer(s))
 }
+
+//go:nosplit
+func MakeStringCopy(src string) string {
+	b := make([]byte, len(src))
+	copy(b, src)
+	return unsafe.String(&b[0], len(b))
+}
