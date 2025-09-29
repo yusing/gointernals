@@ -272,6 +272,11 @@ func MapUnpack[K comparable, V any](m map[K]V) (*Map, *MapType) {
 }
 
 //go:nosplit
+func StrMapCast[K ~string, V any, M ~map[K]V](m M) map[string]V {
+	return *(*map[string]V)(unsafe.Pointer(&m))
+}
+
+//go:nosplit
 //go:linkname MapElemType gointernals.MapElemType
 func MapElemType(mType *MapType) *abi.Type {
 	return mType.Elem
