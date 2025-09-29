@@ -187,6 +187,9 @@ type MapTable struct {
 	groups unsafe.Pointer
 }
 
+//go:linkname reflect_makemap reflect.makemap
+func reflect_makemap(t *MapType, cap int) *Map
+
 //go:linkname mapclone maps.clone
 //go:noescape
 func mapclone(m any) any
@@ -203,9 +206,9 @@ func reflect_mapclear(t *MapType, m *Map)
 //go:noescape
 func mapaccess2_faststr(t *MapType, m *Map, ky string) (unsafe.Pointer, bool)
 
-//go:linkname runtime_mapassign_faststr runtime.mapassign_faststr
+//go:linkname mapassign_faststr runtime.mapassign_faststr
 //go:noescape
-func runtime_mapassign_faststr(t *MapType, m *Map, s string) unsafe.Pointer
+func mapassign_faststr(t *MapType, m *Map, s string) unsafe.Pointer
 
 type (
 	StrMapGetFunc = func(m *Map, mType *MapType, key string) unsafe.Pointer
@@ -241,7 +244,7 @@ func StrMapTryGetAs[K comparable, V any](m *Map, mType *MapType, key string) (V,
 //go:nosplit
 //go:linkname StrMapSet gointernals.StrMapSet
 func StrMapSet(m *Map, mType *MapType, key string, value unsafe.Pointer) {
-	dst := runtime_mapassign_faststr(mType, m, key)
+	dst := mapassign_faststr(mType, m, key)
 	typedmemmove(mType.Elem, dst, value)
 }
 
@@ -266,6 +269,12 @@ func MapClear(m *Map, mType *MapType) {
 func MapUnpack[K comparable, V any](m map[K]V) (*Map, *MapType) {
 	eface := EfaceOf(m)
 	return (*Map)(unsafe.Pointer(eface.Data)), (*MapType)(unsafe.Pointer(eface.Type))
+}
+
+//go:nosplit
+//go:linkname MapElemType gointernals.MapElemType
+func MapElemType(mType *MapType) *abi.Type {
+	return mType.Elem
 }
 
 func MapToEface(m *Map, mType *MapType) *abi.Eface {
