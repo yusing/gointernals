@@ -7,17 +7,15 @@ import (
 )
 
 func TypeFor[T any]() *abi.Type {
-	var v T
-	return EfaceOf(v).Type
+	return (*PointerType)(unsafe.Pointer(TypeOf((*T)(nil)))).Elem
 }
 
-func TypeOf[T any](v T) *abi.Type {
-	return EfaceOf(v).Type
+func TypeOf(v any) *abi.Type {
+	return abi.TypeOf(v)
 }
 
-func EfaceOf[T any](v T) *abi.Eface {
-	vAny := any(v)
-	return (*abi.Eface)(unsafe.Pointer(&vAny))
+func EfaceOf(v any) *abi.Eface {
+	return (*abi.Eface)(unsafe.Pointer(&v))
 }
 
 func AnyFrom(e *abi.Eface) any {
