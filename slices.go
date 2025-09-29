@@ -14,6 +14,18 @@ type Slice struct {
 	cap int
 }
 
+func (s *Slice) Ptr() unsafe.Pointer {
+	return s.ptr
+}
+
+func (s *Slice) Len() int {
+	return s.len
+}
+
+func (s *Slice) Cap() int {
+	return s.cap
+}
+
 // internal/abi/type.go
 type SliceType struct {
 	abi.Type
@@ -87,4 +99,32 @@ func SliceCloneAs[T any](src *Slice, elemType *abi.Type) []T {
 func SliceUnpack[T any](s []T) (*Slice, *abi.Type) {
 	eface := EfaceOf(s)
 	return (*Slice)(unsafe.Pointer(&s)), (*SliceType)(unsafe.Pointer(eface.Type)).Elem
+}
+
+//go:nosplit
+func SliceHeader[T any](s []T) *Slice {
+	return (*Slice)(unsafe.Pointer(&s))
+}
+
+//go:nosplit
+func SlicePack[T any](s *Slice) []T {
+	return *(*[]T)(unsafe.Pointer(s))
+}
+
+//go:nosplit
+func SliceCast[FromT any, ToT any](src []FromT) (ret []ToT) {
+	srcHeader, srcType := SliceUnpack(src)
+	_, dstType := SliceUnpack(ret)
+
+	if srcType.Kind != dstType.Kind || srcType.Size != dstType.Size {
+		panic("SliceCast: type mismatch")
+	}
+	ret = SlicePack[ToT](srcHeader)
+	return
+}
+
+//go:nosplit
+func UnsafeSliceCast[FromT any, ToT any](src []FromT) []ToT {
+	to := SlicePack[ToT](SliceHeader(src))
+	return to
 }
