@@ -11,6 +11,3 @@ test-124:
 
 test-125:
 	go1.25.1 test -count=1 ./...
-
-build:
-	go build -buildmode=c-shared -ldflags='-checklinkname=0' -o out/libgointernals.so cmd/main.go 
