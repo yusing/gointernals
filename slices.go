@@ -112,7 +112,7 @@ func SlicePack[T any](s *Slice) []T {
 }
 
 //go:nosplit
-func SliceCast[FromT any, ToT any](src []FromT) (ret []ToT) {
+func SliceCast[ToT any, FromT any](src []FromT) (ret []ToT) {
 	srcHeader, srcType := SliceUnpack(src)
 	_, dstType := SliceUnpack(ret)
 
@@ -124,7 +124,7 @@ func SliceCast[FromT any, ToT any](src []FromT) (ret []ToT) {
 }
 
 //go:nosplit
-func UnsafeSliceCast[FromT any, ToT any](src []FromT) []ToT {
+func UnsafeSliceCast[ToT any, FromT any](src []FromT) []ToT {
 	to := SlicePack[ToT](SliceHeader(src))
 	return to
 }
