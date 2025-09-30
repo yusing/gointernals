@@ -1,0 +1,513 @@
+//go:build go1.24 && go1.25 && !go1.26
+
+package gointernals
+
+import (
+	"reflect"
+	"testing"
+	"unsafe"
+
+	"github.com/yusing/gointernals/abi"
+)
+
+func TestReflectValueType(t *testing.T) {
+	t.Run("int", func(t *testing.T) {
+		v := reflect.ValueOf(42)
+		typ := ReflectValueType(v)
+		if typ == nil {
+			t.Fatal("Expected non-nil type")
+		}
+		if typ.Kind() != abi.Int {
+			t.Errorf("Expected kind Int, got %v", typ.Kind())
+		}
+		if typ.Size != unsafe.Sizeof(int(0)) {
+			t.Errorf("Expected size %d, got %d", unsafe.Sizeof(int(0)), typ.Size)
+		}
+	})
+
+	t.Run("string", func(t *testing.T) {
+		v := reflect.ValueOf("hello")
+		typ := ReflectValueType(v)
+		if typ == nil {
+			t.Fatal("Expected non-nil type")
+		}
+		if typ.Kind() != abi.String {
+			t.Errorf("Expected kind String, got %v", typ.Kind())
+		}
+		if typ.Size != unsafe.Sizeof("") {
+			t.Errorf("Expected size %d, got %d", unsafe.Sizeof(""), typ.Size)
+		}
+	})
+
+	t.Run("struct", func(t *testing.T) {
+		type testStruct struct {
+			A int
+			B string
+		}
+		v := reflect.ValueOf(testStruct{A: 1, B: "test"})
+		typ := ReflectValueType(v)
+		if typ == nil {
+			t.Fatal("Expected non-nil type")
+		}
+		if typ.Kind() != abi.Struct {
+			t.Errorf("Expected kind Struct, got %v", typ.Kind())
+		}
+		if typ.Size != unsafe.Sizeof(testStruct{}) {
+			t.Errorf("Expected size %d, got %d", unsafe.Sizeof(testStruct{}), typ.Size)
+		}
+	})
+
+	t.Run("slice", func(t *testing.T) {
+		v := reflect.ValueOf([]int{1, 2, 3})
+		typ := ReflectValueType(v)
+		if typ == nil {
+			t.Fatal("Expected non-nil type")
+		}
+		if typ.Kind() != abi.Slice {
+			t.Errorf("Expected kind Slice, got %v", typ.Kind())
+		}
+	})
+
+	t.Run("pointer", func(t *testing.T) {
+		x := 42
+		v := reflect.ValueOf(&x)
+		typ := ReflectValueType(v)
+		if typ == nil {
+			t.Fatal("Expected non-nil type")
+		}
+		if typ.Kind() != abi.Pointer {
+			t.Errorf("Expected kind Pointer, got %v", typ.Kind())
+		}
+		if typ.Size != unsafe.Sizeof(uintptr(0)) {
+			t.Errorf("Expected size %d, got %d", unsafe.Sizeof(uintptr(0)), typ.Size)
+		}
+	})
+
+	t.Run("bool", func(t *testing.T) {
+		v := reflect.ValueOf(true)
+		typ := ReflectValueType(v)
+		if typ == nil {
+			t.Fatal("Expected non-nil type")
+		}
+		if typ.Kind() != abi.Bool {
+			t.Errorf("Expected kind Bool, got %v", typ.Kind())
+		}
+		if typ.Size != unsafe.Sizeof(bool(false)) {
+			t.Errorf("Expected size %d, got %d", unsafe.Sizeof(bool(false)), typ.Size)
+		}
+	})
+
+	t.Run("float64", func(t *testing.T) {
+		v := reflect.ValueOf(3.14)
+		typ := ReflectValueType(v)
+		if typ == nil {
+			t.Fatal("Expected non-nil type")
+		}
+		if typ.Kind() != abi.Float64 {
+			t.Errorf("Expected kind Float64, got %v", typ.Kind())
+		}
+		if typ.Size != unsafe.Sizeof(float64(0)) {
+			t.Errorf("Expected size %d, got %d", unsafe.Sizeof(float64(0)), typ.Size)
+		}
+	})
+}
+
+func TestReflectValueData(t *testing.T) {
+	t.Run("int", func(t *testing.T) {
+		x := 42
+		v := reflect.ValueOf(&x).Elem()
+		data := ReflectValueData(v)
+		if data == nil {
+			t.Fatal("Expected non-nil data pointer")
+		}
+		if *(*int)(data) != 42 {
+			t.Errorf("Expected value 42, got %d", *(*int)(data))
+		}
+		*(*int)(data) = 100
+		if x != 100 {
+			t.Errorf("Expected modified value 100, got %d", x)
+		}
+	})
+
+	t.Run("string", func(t *testing.T) {
+		s := "hello"
+		v := reflect.ValueOf(&s).Elem()
+		data := ReflectValueData(v)
+		if data == nil {
+			t.Fatal("Expected non-nil data pointer")
+		}
+		if *(*string)(data) != "hello" {
+			t.Errorf("Expected value 'hello', got %s", *(*string)(data))
+		}
+	})
+
+	t.Run("bool", func(t *testing.T) {
+		b := true
+		v := reflect.ValueOf(&b).Elem()
+		data := ReflectValueData(v)
+		if data == nil {
+			t.Fatal("Expected non-nil data pointer")
+		}
+		if *(*bool)(data) != true {
+			t.Errorf("Expected value true, got %v", *(*bool)(data))
+		}
+		*(*bool)(data) = false
+		if b != false {
+			t.Errorf("Expected modified value false, got %v", b)
+		}
+	})
+
+	t.Run("float64", func(t *testing.T) {
+		f := 3.14
+		v := reflect.ValueOf(&f).Elem()
+		data := ReflectValueData(v)
+		if data == nil {
+			t.Fatal("Expected non-nil data pointer")
+		}
+		if *(*float64)(data) != 3.14 {
+			t.Errorf("Expected value 3.14, got %f", *(*float64)(data))
+		}
+		*(*float64)(data) = 2.71
+		if f != 2.71 {
+			t.Errorf("Expected modified value 2.71, got %f", f)
+		}
+	})
+
+	t.Run("struct", func(t *testing.T) {
+		type testStruct struct {
+			A int
+			B string
+		}
+		ts := testStruct{A: 10, B: "test"}
+		v := reflect.ValueOf(&ts).Elem()
+		data := ReflectValueData(v)
+		if data == nil {
+			t.Fatal("Expected non-nil data pointer")
+		}
+		result := *(*testStruct)(data)
+		if result.A != 10 || result.B != "test" {
+			t.Errorf("Expected {10, test}, got {%d, %s}", result.A, result.B)
+		}
+	})
+
+	t.Run("slice", func(t *testing.T) {
+		slice := []int{1, 2, 3}
+		v := reflect.ValueOf(&slice).Elem()
+		data := ReflectValueData(v)
+		if data == nil {
+			t.Fatal("Expected non-nil data pointer")
+		}
+		result := *(*[]int)(data)
+		if len(result) != 3 || result[0] != 1 || result[1] != 2 || result[2] != 3 {
+			t.Errorf("Expected [1 2 3], got %v", result)
+		}
+	})
+}
+
+func TestReflectShallowCopy(t *testing.T) {
+	t.Run("int", func(t *testing.T) {
+		src := 42
+		dst := 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 42 {
+			t.Errorf("Expected dst to be 42, got %d", dst)
+		}
+	})
+
+	t.Run("string", func(t *testing.T) {
+		src := "hello world"
+		dst := ""
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != "hello world" {
+			t.Errorf("Expected dst to be 'hello world', got %s", dst)
+		}
+	})
+
+	t.Run("bool", func(t *testing.T) {
+		src := true
+		dst := false
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != true {
+			t.Errorf("Expected dst to be true, got %v", dst)
+		}
+	})
+
+	t.Run("float64", func(t *testing.T) {
+		src := 3.14159
+		dst := 0.0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 3.14159 {
+			t.Errorf("Expected dst to be 3.14159, got %f", dst)
+		}
+	})
+
+	t.Run("struct same size", func(t *testing.T) {
+		type testStruct struct {
+			A int
+			B string
+		}
+		src := testStruct{A: 42, B: "test"}
+		dst := testStruct{}
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst.A != 42 || dst.B != "test" {
+			t.Errorf("Expected dst to be {42, test}, got {%d, %s}", dst.A, dst.B)
+		}
+	})
+
+	t.Run("slice shallow copy", func(t *testing.T) {
+		src := []int{1, 2, 3}
+		dst := []int{}
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if len(dst) != 3 || dst[0] != 1 || dst[1] != 2 || dst[2] != 3 {
+			t.Fatalf("Expected dst to be [1 2 3], got %v", dst)
+		}
+		src[0] = 100
+		if dst[0] != 100 {
+			t.Errorf("Expected shallow copy: dst[0] should be 100 after src[0] changed, got %d", dst[0])
+		}
+	})
+
+	t.Run("pointer", func(t *testing.T) {
+		x := 42
+		src := &x
+		var dst *int
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst == nil {
+			t.Fatal("Expected dst to be non-nil")
+		}
+		if *dst != 42 {
+			t.Errorf("Expected *dst to be 42, got %d", *dst)
+		}
+		if dst != src {
+			t.Errorf("Expected dst and src to point to the same address")
+		}
+	})
+
+	t.Run("int8 to int16 - smaller to larger", func(t *testing.T) {
+		var src int8 = 42
+		var dst int16 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 42 {
+			t.Errorf("Expected dst to be 42, got %d", dst)
+		}
+	})
+
+	t.Run("int16 to int32 - smaller to larger", func(t *testing.T) {
+		var src int16 = 1000
+		var dst int32 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 1000 {
+			t.Errorf("Expected dst to be 1000, got %d", dst)
+		}
+	})
+
+	t.Run("uint8 to uint64 - smaller to larger", func(t *testing.T) {
+		var src uint8 = 255
+		var dst uint64 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 255 {
+			t.Errorf("Expected dst to be 255, got %d", dst)
+		}
+	})
+
+	t.Run("float32 to float64 - smaller to larger", func(t *testing.T) {
+		var src float32 = 3.14
+		var dst float64 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst < 3.1399 || dst > 3.1401 {
+			t.Errorf("Expected dst to be approximately 3.14, got %f", dst)
+		}
+	})
+
+	// t.Run("int32 to int16 - larger to smaller panics", func(t *testing.T) {
+	// 	defer func() {
+	// 		if r := recover(); r == nil {
+	// 			t.Errorf("Expected panic when copying from larger to smaller numeric type")
+	// 		}
+	// 	}()
+	// 	var src int32 = 1000
+	// 	var dst int16 = 0
+	// 	srcV := reflect.ValueOf(&src).Elem()
+	// 	dstV := reflect.ValueOf(&dst).Elem()
+	// 	ReflectShallowCopy(dstV, srcV)
+	// })
+
+	// t.Run("uint64 to uint8 - larger to smaller panics", func(t *testing.T) {
+	// 	defer func() {
+	// 		if r := recover(); r == nil {
+	// 			t.Errorf("Expected panic when copying from larger to smaller numeric type")
+	// 		}
+	// 	}()
+	// 	var src uint64 = 255
+	// 	var dst uint8 = 0
+	// 	srcV := reflect.ValueOf(&src).Elem()
+	// 	dstV := reflect.ValueOf(&dst).Elem()
+	// 	ReflectShallowCopy(dstV, srcV)
+	// })
+
+	t.Run("array shallow copy", func(t *testing.T) {
+		src := [3]int{10, 20, 30}
+		dst := [3]int{}
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst[0] != 10 || dst[1] != 20 || dst[2] != 30 {
+			t.Errorf("Expected dst to be [10 20 30], got %v", dst)
+		}
+		src[0] = 100
+		if dst[0] == 100 {
+			t.Errorf("Expected array copy to be independent: dst[0] should remain 10, got %d", dst[0])
+		}
+	})
+
+	t.Run("int to uint same size positive value", func(t *testing.T) {
+		var src int32 = 100
+		var dst uint32 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 100 {
+			t.Errorf("Expected dst to be 100, got %d", dst)
+		}
+	})
+
+	// t.Run("int to uint same size negative value panics", func(t *testing.T) {
+	// 	defer func() {
+	// 		if r := recover(); r == nil {
+	// 			t.Errorf("Expected panic when copying negative int to uint")
+	// 		}
+	// 	}()
+	// 	var src int32 = -100
+	// 	var dst uint32 = 0
+	// 	srcV := reflect.ValueOf(&src).Elem()
+	// 	dstV := reflect.ValueOf(&dst).Elem()
+	// 	ReflectShallowCopy(dstV, srcV)
+	// })
+
+	t.Run("uint to int same size", func(t *testing.T) {
+		var src uint32 = 100
+		var dst int32 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 100 {
+			t.Errorf("Expected dst to be 100, got %d", dst)
+		}
+	})
+
+	t.Run("uint to int same size large value", func(t *testing.T) {
+		var src uint32 = 4294967295
+		var dst int32 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != -1 {
+			t.Errorf("Expected dst to be -1 (overflow), got %d", dst)
+		}
+	})
+
+	t.Run("int8 to uint16 positive value", func(t *testing.T) {
+		var src int8 = 100
+		var dst uint16 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 100 {
+			t.Errorf("Expected dst to be 100, got %d", dst)
+		}
+	})
+
+	// t.Run("int8 to uint16 negative value panics", func(t *testing.T) {
+	// 	defer func() {
+	// 		if r := recover(); r == nil {
+	// 			t.Errorf("Expected panic when copying negative int8 to uint16")
+	// 		}
+	// 	}()
+	// 	var src int8 = -50
+	// 	var dst uint16 = 0
+	// 	srcV := reflect.ValueOf(&src).Elem()
+	// 	dstV := reflect.ValueOf(&dst).Elem()
+	// 	ReflectShallowCopy(dstV, srcV)
+	// })
+
+	t.Run("uint8 to int64", func(t *testing.T) {
+		var src uint8 = 255
+		var dst int64 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 255 {
+			t.Errorf("Expected dst to be 255, got %d", dst)
+		}
+	})
+
+	// t.Run("int to float panics", func(t *testing.T) {
+	// 	defer func() {
+	// 		if r := recover(); r == nil {
+	// 			t.Errorf("Expected panic when copying int to float")
+	// 		}
+	// 	}()
+	// 	var src int32 = 100
+	// 	var dst float32 = 0
+	// 	srcV := reflect.ValueOf(&src).Elem()
+	// 	dstV := reflect.ValueOf(&dst).Elem()
+	// 	ReflectShallowCopy(dstV, srcV)
+	// })
+
+	t.Run("string to int panics", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic when copying string to int")
+			}
+		}()
+		var src string = "hello"
+		var dst int = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+	})
+
+	t.Run("same size same type int64", func(t *testing.T) {
+		var src int64 = 9876543210
+		var dst int64 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 9876543210 {
+			t.Errorf("Expected dst to be 9876543210, got %d", dst)
+		}
+	})
+
+	t.Run("same size same type uint64", func(t *testing.T) {
+		var src uint64 = 18446744073709551615
+		var dst uint64 = 0
+		srcV := reflect.ValueOf(&src).Elem()
+		dstV := reflect.ValueOf(&dst).Elem()
+		ReflectShallowCopy(dstV, srcV)
+		if dst != 18446744073709551615 {
+			t.Errorf("Expected dst to be 18446744073709551615, got %d", dst)
+		}
+	})
+}

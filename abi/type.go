@@ -131,6 +131,14 @@ func (k Kind) String() string {
 	return kindNames[0]
 }
 
+// Size returns the size of the kind.
+func (k Kind) Size() uintptr {
+	if int(k) >= len(kindSizes) {
+		return 0
+	}
+	return kindSizes[k]
+}
+
 var kindNames = []string{
 	Invalid:       "invalid",
 	Bool:          "bool",
@@ -159,6 +167,36 @@ var kindNames = []string{
 	String:        "string",
 	Struct:        "struct",
 	UnsafePointer: "unsafe.Pointer",
+}
+
+var kindSizes = []uintptr{
+	Invalid:       0,
+	Bool:          unsafe.Sizeof(bool(false)),
+	Int:           unsafe.Sizeof(int(0)),
+	Int8:          unsafe.Sizeof(int8(0)),
+	Int16:         unsafe.Sizeof(int16(0)),
+	Int32:         unsafe.Sizeof(int32(0)),
+	Int64:         unsafe.Sizeof(int64(0)),
+	Uint:          unsafe.Sizeof(uint(0)),
+	Uint8:         unsafe.Sizeof(uint8(0)),
+	Uint16:        unsafe.Sizeof(uint16(0)),
+	Uint32:        unsafe.Sizeof(uint32(0)),
+	Uint64:        unsafe.Sizeof(uint64(0)),
+	Uintptr:       unsafe.Sizeof(uintptr(0)),
+	Float32:       unsafe.Sizeof(float32(0)),
+	Float64:       unsafe.Sizeof(float64(0)),
+	Complex64:     unsafe.Sizeof(complex64(0)),
+	Complex128:    unsafe.Sizeof(complex128(0)),
+	Array:         0,
+	Chan:          0,
+	Func:          0,
+	Interface:     0,
+	Map:           0,
+	Pointer:       unsafe.Sizeof(unsafe.Pointer(nil)),
+	Slice:         0,
+	String:        0,
+	Struct:        0,
+	UnsafePointer: unsafe.Sizeof(unsafe.Pointer(nil)),
 }
 
 const (
