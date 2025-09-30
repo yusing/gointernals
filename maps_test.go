@@ -21,8 +21,8 @@ func TestMapUnpack(t *testing.T) {
 		if mtable == nil {
 			t.Fatalf("mtable is nil")
 		}
-		if mtype.Elem.Kind != abi.String {
-			t.Errorf("Expected mtype.Elem.Kind_ to be String, got %d", mtype.Elem.Kind)
+		if mtype.Elem.Kind() != abi.String {
+			t.Errorf("Expected mtype.Elem.Kind_ to be String, got %d", mtype.Elem.Kind())
 		}
 	})
 
@@ -35,8 +35,8 @@ func TestMapUnpack(t *testing.T) {
 		if mtable == nil {
 			t.Fatalf("mtable is nil")
 		}
-		if mtype.Elem.Kind != abi.Int {
-			t.Errorf("Expected mtype.Elem.Kind_ to be Int, got %d", mtype.Elem.Kind)
+		if mtype.Elem.Kind() != abi.Int {
+			t.Errorf("Expected mtype.Elem.Kind_ to be Int, got %d", mtype.Elem.Kind())
 		}
 	})
 
@@ -54,8 +54,8 @@ func TestMapUnpack(t *testing.T) {
 		if mtable == nil {
 			t.Fatalf("mtable is nil")
 		}
-		if mtype.Elem.Kind != abi.Struct {
-			t.Errorf("Expected mtype.Elem.Kind_ to be Struct, got %d", mtype.Elem.Kind)
+		if mtype.Elem.Kind() != abi.Struct {
+			t.Errorf("Expected mtype.Elem.Kind_ to be Struct, got %d", mtype.Elem.Kind())
 		}
 	})
 }

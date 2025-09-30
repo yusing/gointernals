@@ -116,7 +116,7 @@ func SliceCast[ToT any, FromT any, S ~[]FromT](src S) (ret []ToT) {
 	srcHeader, srcType := SliceUnpack(src)
 	_, dstType := SliceUnpack(ret)
 
-	if srcType.Kind != dstType.Kind || srcType.Size != dstType.Size {
+	if srcType.Kind() != dstType.Kind() || srcType.Size != dstType.Size {
 		panic("SliceCast: type mismatch")
 	}
 	ret = SlicePack[ToT](srcHeader)

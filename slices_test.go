@@ -25,8 +25,8 @@ func TestSliceUnpack(t *testing.T) {
 		if elemType.Size != unsafe.Sizeof("") {
 			t.Errorf("Expected elemType.Size_ to be %d, got %d", unsafe.Sizeof(string("")), elemType.Size)
 		}
-		if elemType.Kind != abi.String {
-			t.Errorf("Expected elemType.Kind_ to be String, got %d", elemType.Kind)
+		if elemType.Kind() != abi.String {
+			t.Errorf("Expected elemType.Kind_ to be String, got %d", elemType.Kind())
 		}
 	})
 }
