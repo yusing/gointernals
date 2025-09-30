@@ -663,13 +663,13 @@ func TestReflectSetZero(t *testing.T) {
 	})
 }
 
-func TestReflectInitPtrIface(t *testing.T) {
+func TestReflectInitPtr(t *testing.T) {
 	t.Run("pointer to int", func(t *testing.T) {
 		var p *int
 		v := reflect.ValueOf(&p).Elem()
 		ReflectInitPtr(v)
 		if p == nil {
-			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+			t.Fatal("Expected p to be non-nil after ReflectInitPtr")
 		}
 		if *p != 0 {
 			t.Errorf("Expected *p to be 0 (zero value), got %d", *p)
@@ -681,7 +681,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 		v := reflect.ValueOf(&p).Elem()
 		ReflectInitPtr(v)
 		if p == nil {
-			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+			t.Fatal("Expected p to be non-nil after ReflectInitPtr")
 		}
 		if *p != "" {
 			t.Errorf("Expected *p to be empty string (zero value), got %s", *p)
@@ -697,7 +697,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 		v := reflect.ValueOf(&p).Elem()
 		ReflectInitPtr(v)
 		if p == nil {
-			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+			t.Fatal("Expected p to be non-nil after ReflectInitPtr")
 		}
 		if p.A != 0 || p.B != "" {
 			t.Errorf("Expected *p to be zero value {0, ''}, got {%d, %s}", p.A, p.B)
@@ -709,7 +709,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 		v := reflect.ValueOf(&p).Elem()
 		ReflectInitPtr(v)
 		if p == nil {
-			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+			t.Fatal("Expected p to be non-nil after ReflectInitPtr")
 		}
 		if *p != nil {
 			t.Errorf("Expected *p to be nil slice (zero value), got %v", *p)
@@ -721,7 +721,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 		v := reflect.ValueOf(&p).Elem()
 		ReflectInitPtr(v)
 		if p == nil {
-			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+			t.Fatal("Expected p to be non-nil after ReflectInitPtr")
 		}
 		if *p != nil {
 			t.Errorf("Expected *p to be nil map (zero value), got %v", *p)
@@ -733,7 +733,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 		v := reflect.ValueOf(&p).Elem()
 		ReflectInitPtr(v)
 		if p == nil {
-			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+			t.Fatal("Expected p to be non-nil after ReflectInitPtr")
 		}
 		if *p != false {
 			t.Errorf("Expected *p to be false (zero value), got %v", *p)
@@ -745,7 +745,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 		v := reflect.ValueOf(&p).Elem()
 		ReflectInitPtr(v)
 		if p == nil {
-			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+			t.Fatal("Expected p to be non-nil after ReflectInitPtr")
 		}
 		if *p != 0.0 {
 			t.Errorf("Expected *p to be 0.0 (zero value), got %f", *p)
@@ -757,7 +757,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 		v := reflect.ValueOf(&p).Elem()
 		ReflectInitPtr(v)
 		if p == nil {
-			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+			t.Fatal("Expected p to be non-nil after ReflectInitPtr")
 		}
 		if *p != nil {
 			t.Errorf("Expected *p to be nil (zero value for *int), got %v", *p)
@@ -767,7 +767,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 	t.Run("panic on string", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
-				t.Errorf("Expected panic when calling ReflectInitPtrIface on string type")
+				t.Errorf("Expected panic when calling ReflectInitPtr on string type")
 			}
 		}()
 		var s string = "hello"
@@ -778,7 +778,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 	t.Run("panic on slice", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
-				t.Errorf("Expected panic when calling ReflectInitPtrIface on slice type")
+				t.Errorf("Expected panic when calling ReflectInitPtr on slice type")
 			}
 		}()
 		var slice []int
@@ -789,7 +789,7 @@ func TestReflectInitPtrIface(t *testing.T) {
 	t.Run("panic on struct", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
-				t.Errorf("Expected panic when calling ReflectInitPtrIface on struct type")
+				t.Errorf("Expected panic when calling ReflectInitPtr on struct type")
 			}
 		}()
 		type testStruct struct {

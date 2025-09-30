@@ -58,7 +58,7 @@ func ReflectInitPtr(v reflect.Value) {
 		return
 	}
 
-	panic(fmt.Errorf("gointernals.ReflectSetNewElem: invalid type %s", t.Kind().String()))
+	panic(fmt.Errorf("gointernals.ReflectInitPtr: invalid type %s", t.Kind().String()))
 }
 
 // ReflectShallowCopy copies the value of src to dst.
