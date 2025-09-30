@@ -268,7 +268,7 @@ func MapClear(m *Map, mType *MapType) {
 //go:nosplit
 func MapUnpack[K comparable, V any](m map[K]V) (*Map, *MapType) {
 	eface := EfaceOf(m)
-	return (*Map)(unsafe.Pointer(eface.Data)), (*MapType)(unsafe.Pointer(eface.Type))
+	return (*Map)(unsafe.Pointer(eface.Data)), (*MapType)(abi.NoEscape(unsafe.Pointer(eface.Type)))
 }
 
 //go:nosplit
@@ -285,7 +285,7 @@ func MapElemType(mType *MapType) *abi.Type {
 func MapToEface(m *Map, mType *MapType) *abi.Eface {
 	return &abi.Eface{
 		Data: unsafe.Pointer(m),
-		Type: (*abi.Type)(unsafe.Pointer(mType)),
+		Type: (*abi.Type)(abi.NoEscape(unsafe.Pointer(mType))),
 	}
 }
 

@@ -98,12 +98,12 @@ func SliceCloneAs[T any](src *Slice, elemType *abi.Type) []T {
 //go:nosplit
 func SliceUnpack[T any](s []T) (*Slice, *abi.Type) {
 	eface := EfaceOf(s)
-	return (*Slice)(unsafe.Pointer(&s)), (*SliceType)(unsafe.Pointer(eface.Type)).Elem
+	return (*Slice)(unsafe.Pointer(&s)), (*SliceType)(abi.NoEscape(unsafe.Pointer(eface.Type))).Elem
 }
 
 //go:nosplit
 func SliceHeader[T any](s []T) *Slice {
-	return (*Slice)(unsafe.Pointer(&s))
+	return (*Slice)(abi.NoEscape(unsafe.Pointer(&s)))
 }
 
 //go:nosplit
