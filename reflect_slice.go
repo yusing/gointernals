@@ -5,6 +5,7 @@ import (
 	"unsafe"
 )
 
+//go:nosplit
 func ReflectMakeSlice(typ reflect.Type, len, cap int) Slice {
 	if typ.Kind() != reflect.Slice {
 		panic("gointernals.ReflectMakeSlice of non-slice type")
@@ -26,6 +27,8 @@ func ReflectMakeSlice(typ reflect.Type, len, cap int) Slice {
 }
 
 // ReflectInitSlice initializes a slice with the given length and capacity.
+//
+//go:nosplit
 func ReflectInitSlice(dst reflect.Value, len, cap int) {
 	if dst.Kind() != reflect.Slice {
 		panic("gointernals.ReflectInitSlice of non-slice type")
@@ -46,6 +49,7 @@ func ReflectInitSlice(dst reflect.Value, len, cap int) {
 	s.cap = cap
 }
 
+//go:nosplit
 func ReflectSetSliceAt(dst reflect.Value, index int, value reflect.Value) {
 	if dst.Kind() != reflect.Slice {
 		panic("gointernals.ReflectSetSliceAt of non-slice type")
