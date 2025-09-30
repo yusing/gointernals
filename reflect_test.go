@@ -511,3 +511,292 @@ func TestReflectShallowCopy(t *testing.T) {
 		}
 	})
 }
+
+func TestReflectSetZero(t *testing.T) {
+	t.Run("int", func(t *testing.T) {
+		x := 42
+		v := reflect.ValueOf(&x).Elem()
+		ReflectSetZero(v)
+		if x != 0 {
+			t.Errorf("Expected x to be 0 after ReflectSetZero, got %d", x)
+		}
+	})
+
+	t.Run("string", func(t *testing.T) {
+		s := "hello world"
+		v := reflect.ValueOf(&s).Elem()
+		ReflectSetZero(v)
+		if s != "" {
+			t.Errorf("Expected s to be empty string after ReflectSetZero, got %s", s)
+		}
+	})
+
+	t.Run("bool", func(t *testing.T) {
+		b := true
+		v := reflect.ValueOf(&b).Elem()
+		ReflectSetZero(v)
+		if b != false {
+			t.Errorf("Expected b to be false after ReflectSetZero, got %v", b)
+		}
+	})
+
+	t.Run("float64", func(t *testing.T) {
+		f := 3.14159
+		v := reflect.ValueOf(&f).Elem()
+		ReflectSetZero(v)
+		if f != 0.0 {
+			t.Errorf("Expected f to be 0.0 after ReflectSetZero, got %f", f)
+		}
+	})
+
+	t.Run("int64", func(t *testing.T) {
+		var x int64 = 9876543210
+		v := reflect.ValueOf(&x).Elem()
+		ReflectSetZero(v)
+		if x != 0 {
+			t.Errorf("Expected x to be 0 after ReflectSetZero, got %d", x)
+		}
+	})
+
+	t.Run("uint64", func(t *testing.T) {
+		var x uint64 = 18446744073709551615
+		v := reflect.ValueOf(&x).Elem()
+		ReflectSetZero(v)
+		if x != 0 {
+			t.Errorf("Expected x to be 0 after ReflectSetZero, got %d", x)
+		}
+	})
+
+	t.Run("struct", func(t *testing.T) {
+		type testStruct struct {
+			A int
+			B string
+			C float64
+		}
+		ts := testStruct{A: 42, B: "test", C: 3.14}
+		v := reflect.ValueOf(&ts).Elem()
+		ReflectSetZero(v)
+		if ts.A != 0 || ts.B != "" || ts.C != 0.0 {
+			t.Errorf("Expected ts to be zero value {0, '', 0.0}, got {%d, %s, %f}", ts.A, ts.B, ts.C)
+		}
+	})
+
+	t.Run("slice", func(t *testing.T) {
+		slice := []int{1, 2, 3}
+		v := reflect.ValueOf(&slice).Elem()
+		ReflectSetZero(v)
+		if slice != nil {
+			t.Errorf("Expected slice to be nil after ReflectSetZero, got %v", slice)
+		}
+	})
+
+	t.Run("map", func(t *testing.T) {
+		m := map[string]int{"a": 1, "b": 2}
+		v := reflect.ValueOf(&m).Elem()
+		ReflectSetZero(v)
+		if m != nil {
+			t.Errorf("Expected m to be nil after ReflectSetZero, got %v", m)
+		}
+	})
+
+	t.Run("pointer", func(t *testing.T) {
+		x := 42
+		p := &x
+		v := reflect.ValueOf(&p).Elem()
+		ReflectSetZero(v)
+		if p != nil {
+			t.Errorf("Expected p to be nil after ReflectSetZero, got %v", p)
+		}
+	})
+
+	t.Run("interface", func(t *testing.T) {
+		var i any = "hello"
+		v := reflect.ValueOf(&i).Elem()
+		ReflectSetZero(v)
+		if i != nil {
+			t.Errorf("Expected i to be nil after ReflectSetZero, got %v", i)
+		}
+	})
+
+	t.Run("array", func(t *testing.T) {
+		arr := [3]int{1, 2, 3}
+		v := reflect.ValueOf(&arr).Elem()
+		ReflectSetZero(v)
+		if arr[0] != 0 || arr[1] != 0 || arr[2] != 0 {
+			t.Errorf("Expected arr to be [0 0 0] after ReflectSetZero, got %v", arr)
+		}
+	})
+
+	t.Run("complex64", func(t *testing.T) {
+		c := complex64(3 + 4i)
+		v := reflect.ValueOf(&c).Elem()
+		ReflectSetZero(v)
+		if c != 0 {
+			t.Errorf("Expected c to be 0+0i after ReflectSetZero, got %v", c)
+		}
+	})
+
+	t.Run("complex128", func(t *testing.T) {
+		c := complex128(3 + 4i)
+		v := reflect.ValueOf(&c).Elem()
+		ReflectSetZero(v)
+		if c != 0 {
+			t.Errorf("Expected c to be 0+0i after ReflectSetZero, got %v", c)
+		}
+	})
+
+	t.Run("nested struct", func(t *testing.T) {
+		type Inner struct {
+			X int
+			Y string
+		}
+		type Outer struct {
+			A Inner
+			B int
+		}
+		outer := Outer{A: Inner{X: 10, Y: "test"}, B: 20}
+		v := reflect.ValueOf(&outer).Elem()
+		ReflectSetZero(v)
+		if outer.A.X != 0 || outer.A.Y != "" || outer.B != 0 {
+			t.Errorf("Expected outer to be zero value, got %+v", outer)
+		}
+	})
+}
+
+func TestReflectInitPtrIface(t *testing.T) {
+	t.Run("pointer to int", func(t *testing.T) {
+		var p *int
+		v := reflect.ValueOf(&p).Elem()
+		ReflectInitPtr(v)
+		if p == nil {
+			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+		}
+		if *p != 0 {
+			t.Errorf("Expected *p to be 0 (zero value), got %d", *p)
+		}
+	})
+
+	t.Run("pointer to string", func(t *testing.T) {
+		var p *string
+		v := reflect.ValueOf(&p).Elem()
+		ReflectInitPtr(v)
+		if p == nil {
+			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+		}
+		if *p != "" {
+			t.Errorf("Expected *p to be empty string (zero value), got %s", *p)
+		}
+	})
+
+	t.Run("pointer to struct", func(t *testing.T) {
+		type testStruct struct {
+			A int
+			B string
+		}
+		var p *testStruct
+		v := reflect.ValueOf(&p).Elem()
+		ReflectInitPtr(v)
+		if p == nil {
+			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+		}
+		if p.A != 0 || p.B != "" {
+			t.Errorf("Expected *p to be zero value {0, ''}, got {%d, %s}", p.A, p.B)
+		}
+	})
+
+	t.Run("pointer to slice", func(t *testing.T) {
+		var p *[]int
+		v := reflect.ValueOf(&p).Elem()
+		ReflectInitPtr(v)
+		if p == nil {
+			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+		}
+		if *p != nil {
+			t.Errorf("Expected *p to be nil slice (zero value), got %v", *p)
+		}
+	})
+
+	t.Run("pointer to map", func(t *testing.T) {
+		var p *map[string]int
+		v := reflect.ValueOf(&p).Elem()
+		ReflectInitPtr(v)
+		if p == nil {
+			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+		}
+		if *p != nil {
+			t.Errorf("Expected *p to be nil map (zero value), got %v", *p)
+		}
+	})
+
+	t.Run("pointer to bool", func(t *testing.T) {
+		var p *bool
+		v := reflect.ValueOf(&p).Elem()
+		ReflectInitPtr(v)
+		if p == nil {
+			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+		}
+		if *p != false {
+			t.Errorf("Expected *p to be false (zero value), got %v", *p)
+		}
+	})
+
+	t.Run("pointer to float64", func(t *testing.T) {
+		var p *float64
+		v := reflect.ValueOf(&p).Elem()
+		ReflectInitPtr(v)
+		if p == nil {
+			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+		}
+		if *p != 0.0 {
+			t.Errorf("Expected *p to be 0.0 (zero value), got %f", *p)
+		}
+	})
+
+	t.Run("pointer to pointer", func(t *testing.T) {
+		var p **int
+		v := reflect.ValueOf(&p).Elem()
+		ReflectInitPtr(v)
+		if p == nil {
+			t.Fatal("Expected p to be non-nil after ReflectInitPtrIface")
+		}
+		if *p != nil {
+			t.Errorf("Expected *p to be nil (zero value for *int), got %v", *p)
+		}
+	})
+
+	t.Run("panic on string", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic when calling ReflectInitPtrIface on string type")
+			}
+		}()
+		var s string = "hello"
+		v := reflect.ValueOf(&s).Elem()
+		ReflectInitPtr(v)
+	})
+
+	t.Run("panic on slice", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic when calling ReflectInitPtrIface on slice type")
+			}
+		}()
+		var slice []int
+		v := reflect.ValueOf(&slice).Elem()
+		ReflectInitPtr(v)
+	})
+
+	t.Run("panic on struct", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected panic when calling ReflectInitPtrIface on struct type")
+			}
+		}()
+		type testStruct struct {
+			A int
+		}
+		var ts testStruct
+		v := reflect.ValueOf(&ts).Elem()
+		ReflectInitPtr(v)
+	})
+}

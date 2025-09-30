@@ -42,6 +42,25 @@ func ReflectValueSet[T any](v reflect.Value, x T) {
 	*(*T)(abi.NoEscape(ReflectValueData(v))) = x
 }
 
+//go:nosplit
+func ReflectSetZero(v reflect.Value) {
+	typedmemclr(ReflectValueType(v), ReflectValueData(v))
+}
+
+//go:nosplit
+func ReflectInitPtr(v reflect.Value) {
+	t := v.Type()
+	switch t.Kind() {
+	case reflect.Pointer:
+		elemT := t.Elem()
+		newElemPtr := reflect_unsafe_New(ReflectTypeToABIType(elemT))
+		ReflectValueSet(v, newElemPtr)
+		return
+	}
+
+	panic(fmt.Errorf("gointernals.ReflectSetNewElem: invalid type %s", t.Kind().String()))
+}
+
 // ReflectShallowCopy copies the value of src to dst.
 // It will panic if the types are not compatible.
 // Note: this function does not update type and flag fields in dst.
