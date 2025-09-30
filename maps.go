@@ -187,9 +187,6 @@ type MapTable struct {
 	groups unsafe.Pointer
 }
 
-//go:linkname reflect_makemap reflect.makemap
-func reflect_makemap(t *MapType, cap int) *Map
-
 //go:linkname mapclone maps.clone
 //go:noescape
 func mapclone(m any) any
@@ -197,10 +194,6 @@ func mapclone(m any) any
 //go:linkname mapaccess1_faststr runtime.mapaccess1_faststr
 //go:noescape
 func mapaccess1_faststr(t *MapType, m *Map, ky string) unsafe.Pointer
-
-//go:linkname reflect_mapclear reflect.mapclear
-//go:noescape
-func reflect_mapclear(t *MapType, m *Map)
 
 //go:linkname mapaccess2_faststr
 //go:noescape
