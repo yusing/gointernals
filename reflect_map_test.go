@@ -390,3 +390,75 @@ func TestInitMap(t *testing.T) {
 		}
 	})
 }
+
+func TestReflectStrMapAssign_BasicAssignAndOverwrite(t *testing.T) {
+	var m map[string]int
+	mv := reflect.ValueOf(&m).Elem()
+
+	ReflectInitMap(mv, 0)
+
+	// assign new key
+	ev := ReflectStrMapAssign(mv, "a")
+	if ev.Kind() != reflect.Pointer || ev.Elem().Kind() != reflect.Int {
+		t.Fatalf("unexpected element value kind: %v -> %v", ev.Kind(), ev.Elem().Kind())
+	}
+	ev.Elem().SetInt(1)
+	if got := m["a"]; got != 1 {
+		t.Fatalf("want 1, got %d", got)
+	}
+
+	// overwrite existing key
+	ev2 := ReflectStrMapAssign(mv, "a")
+	ev2.Elem().SetInt(2)
+	if got := m["a"]; got != 2 {
+		t.Fatalf("want 2, got %d", got)
+	}
+}
+
+func TestReflectStrMapAssign_StructValues(t *testing.T) {
+	type S struct{ X, Y int }
+	var m map[string]S
+	mv := reflect.ValueOf(&m).Elem()
+
+	ReflectInitMap(mv, 0)
+
+	ev := ReflectStrMapAssign(mv, "p")
+	if ev.Kind() != reflect.Pointer || ev.Elem().Kind() != reflect.Struct {
+		t.Fatalf("unexpected kind: %v -> %v", ev.Kind(), ev.Elem().Kind())
+	}
+	ev.Elem().Field(0).SetInt(10)
+	ev.Elem().Field(1).SetInt(20)
+	if got := m["p"]; got != (S{10, 20}) {
+		t.Fatalf("want {10 20}, got %+v", got)
+	}
+}
+
+func TestReflectStrMapAssign_MultipleKeys(t *testing.T) {
+	var m map[string]string
+	mv := reflect.ValueOf(&m).Elem()
+
+	ReflectInitMap(mv, 0)
+
+	keys := []string{"k1", "k2", "k3"}
+	vals := []string{"v1", "v2", "v3"}
+	for i := range keys {
+		ev := ReflectStrMapAssign(mv, keys[i])
+		ev.Elem().SetString(vals[i])
+	}
+	if len(m) != 3 || m["k1"] != "v1" || m["k2"] != "v2" || m["k3"] != "v3" {
+		t.Fatalf("unexpected map contents: %#v", m)
+	}
+}
+
+func TestReflectStrMapAssign_PanicOnNilMap(t *testing.T) {
+	var m map[string]int // nil map
+	mv := reflect.ValueOf(&m).Elem()
+
+	// Do not initialize to verify behavior on nil map
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("expected panic on nil map assign")
+		}
+	}()
+	_ = ReflectStrMapAssign(mv, "x")
+}

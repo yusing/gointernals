@@ -2,8 +2,11 @@ package gointernals
 
 import (
 	"reflect"
+	"unsafe"
 
 	_ "unsafe"
+
+	"github.com/yusing/gointernals/abi"
 )
 
 //go:linkname reflect_makemap reflect.makemap
@@ -22,4 +25,11 @@ func ReflectInitMap(dst reflect.Value, len int) {
 	dstT := ReflectTypeToABIType(dst.Type())
 	newMap := reflect_makemap(PointerCast[MapType](dstT), len)
 	ReflectValueSet(dst, newMap)
+}
+
+func ReflectStrMapAssign(dst reflect.Value, key string) reflect.Value {
+	eface := EfaceOf(dst.Interface())
+	m, mType := (*Map)(unsafe.Pointer(eface.Data)), (*MapType)(abi.NoEscape(unsafe.Pointer(eface.Type)))
+	elemPtr := mapassign_faststr(mType, m, key)
+	return reflect.NewAt(dst.Type().Elem(), elemPtr)
 }
