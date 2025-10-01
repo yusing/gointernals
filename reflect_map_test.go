@@ -399,17 +399,17 @@ func TestReflectStrMapAssign_BasicAssignAndOverwrite(t *testing.T) {
 
 	// assign new key
 	ev := ReflectStrMapAssign(mv, "a")
-	if ev.Kind() != reflect.Pointer || ev.Elem().Kind() != reflect.Int {
+	if ev.Kind() != reflect.Int {
 		t.Fatalf("unexpected element value kind: %v -> %v", ev.Kind(), ev.Elem().Kind())
 	}
-	ev.Elem().SetInt(1)
+	ev.SetInt(1)
 	if got := m["a"]; got != 1 {
 		t.Fatalf("want 1, got %d", got)
 	}
 
 	// overwrite existing key
 	ev2 := ReflectStrMapAssign(mv, "a")
-	ev2.Elem().SetInt(2)
+	ev2.SetInt(2)
 	if got := m["a"]; got != 2 {
 		t.Fatalf("want 2, got %d", got)
 	}
@@ -423,11 +423,11 @@ func TestReflectStrMapAssign_StructValues(t *testing.T) {
 	ReflectInitMap(mv, 0)
 
 	ev := ReflectStrMapAssign(mv, "p")
-	if ev.Kind() != reflect.Pointer || ev.Elem().Kind() != reflect.Struct {
+	if ev.Kind() != reflect.Struct {
 		t.Fatalf("unexpected kind: %v -> %v", ev.Kind(), ev.Elem().Kind())
 	}
-	ev.Elem().Field(0).SetInt(10)
-	ev.Elem().Field(1).SetInt(20)
+	ev.Field(0).SetInt(10)
+	ev.Field(1).SetInt(20)
 	if got := m["p"]; got != (S{10, 20}) {
 		t.Fatalf("want {10 20}, got %+v", got)
 	}
@@ -443,7 +443,7 @@ func TestReflectStrMapAssign_MultipleKeys(t *testing.T) {
 	vals := []string{"v1", "v2", "v3"}
 	for i := range keys {
 		ev := ReflectStrMapAssign(mv, keys[i])
-		ev.Elem().SetString(vals[i])
+		ev.SetString(vals[i])
 	}
 	if len(m) != 3 || m["k1"] != "v1" || m["k2"] != "v2" || m["k3"] != "v3" {
 		t.Fatalf("unexpected map contents: %#v", m)
@@ -458,7 +458,7 @@ func TestReflectStrMapAssign_MapStringString(t *testing.T) {
 		ReflectInitMap(mv, 0)
 
 		ev := ReflectStrMapAssign(mv, "p")
-		ev.Elem().SetString("10")
+		ev.SetString("10")
 	}
 	if got := m["p"]; got != "10" {
 		t.Fatalf("want 10, got %s", got)
@@ -467,6 +467,30 @@ func TestReflectStrMapAssign_MapStringString(t *testing.T) {
 	for _, v := range m {
 		if v != "10" {
 			t.Fatalf("want 10, got %s", v)
+		}
+	}
+}
+
+func TestReflectStrMapAssign_MapStringStructPtr(t *testing.T) {
+	type S struct{ X int }
+	var m map[string]*S
+	mv := reflect.ValueOf(&m).Elem()
+
+	ReflectInitMap(mv, 0)
+
+	ev := ReflectStrMapAssign(mv, "p")
+	ev.Set(reflect.New(ev.Type().Elem()))
+	ev.Elem().Field(0).SetInt(10)
+	if got := *m["p"]; got != (S{10}) {
+		t.Fatalf("want {10}, got %+v", got)
+	}
+
+	for _, v := range m {
+		if v == nil {
+			t.Fatalf("want non-nil pointer")
+		}
+		if v.X != 10 {
+			t.Fatalf("want 10, got %d", v.X)
 		}
 	}
 }
@@ -491,17 +515,17 @@ func TestReflectMapAssign_BasicIntMap(t *testing.T) {
 	ReflectInitMap(mv, 0)
 
 	ev := ReflectMapAssign(mv, 1)
-	if ev.Kind() != reflect.Pointer || ev.Elem().Kind() != reflect.Int {
+	if ev.Kind() != reflect.Int {
 		t.Fatalf("unexpected element value kind: %v -> %v", ev.Kind(), ev.Elem().Kind())
 	}
-	ev.Elem().SetInt(42)
+	ev.SetInt(42)
 	if got := m[1]; got != 42 {
 		t.Fatalf("want 42, got %d", got)
 	}
 
 	// overwrite
 	ev2 := ReflectMapAssign(mv, 1)
-	ev2.Elem().SetInt(7)
+	ev2.SetInt(7)
 	if got := m[1]; got != 7 {
 		t.Fatalf("want 7, got %d", got)
 	}
@@ -514,7 +538,7 @@ func TestReflectMapAssign_StringKeyViaAny(t *testing.T) {
 	ReflectInitMap(mv, 0)
 
 	ev := ReflectMapAssign(mv, "k")
-	ev.Elem().SetInt(3)
+	ev.SetInt(3)
 	if got := m["k"]; got != 3 {
 		t.Fatalf("want 3, got %d", got)
 	}
@@ -530,10 +554,10 @@ func TestReflectMapAssign_StructKeyValue(t *testing.T) {
 
 	key := K{A: 9}
 	ev := ReflectMapAssign(mv, key)
-	if ev.Kind() != reflect.Pointer || ev.Elem().Kind() != reflect.Struct {
+	if ev.Kind() != reflect.Struct {
 		t.Fatalf("unexpected kind: %v -> %v", ev.Kind(), ev.Elem().Kind())
 	}
-	ev.Elem().Field(0).SetString("x")
+	ev.Field(0).SetString("x")
 	if got := m[key]; got != (V{S: "x"}) {
 		t.Fatalf("unexpected value: %+v", got)
 	}
@@ -547,8 +571,8 @@ func TestReflectMapAssign_InterfaceKey(t *testing.T) {
 
 	key1 := 10
 	key2 := "s"
-	ReflectMapAssign(mv, key1).Elem().SetString("ten")
-	ReflectMapAssign(mv, key2).Elem().SetString("str")
+	ReflectMapAssign(mv, key1).SetString("ten")
+	ReflectMapAssign(mv, key2).SetString("str")
 
 	if m[10] != "ten" || m["s"] != "str" {
 		t.Fatalf("unexpected map contents: %#v", m)
@@ -563,7 +587,7 @@ func TestReflectMapAssign_PointerKey(t *testing.T) {
 
 	k := new(int)
 	*k = 5
-	ReflectMapAssign(mv, k).Elem().SetFloat(1.5)
+	ReflectMapAssign(mv, k).SetFloat(1.5)
 	if m[k] != 1.5 {
 		t.Fatalf("want 1.5, got %v", m[k])
 	}

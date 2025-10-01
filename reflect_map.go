@@ -33,6 +33,10 @@ func ReflectMapUnpack(dst reflect.Value) (*Map, *MapType) {
 	return (*Map)(unsafe.Pointer(eface.Data)), (*MapType)(abi.NoEscape(unsafe.Pointer(eface.Type)))
 }
 
+// ReflectStrMapAssign assigns a string key to a map and returns the value.
+//
+// The returned value should satisfy CanSet().
+//
 //go:nosplit
 func ReflectStrMapAssign(dst reflect.Value, key string) reflect.Value {
 	if dst.Kind() != reflect.Map || dst.Type().Key().Kind() != reflect.String {
@@ -44,9 +48,13 @@ func ReflectStrMapAssign(dst reflect.Value, key string) reflect.Value {
 
 	m, mType := ReflectMapUnpack(dst)
 	elemPtr := mapassign_faststr(mType, m, key)
-	return reflect.NewAt(dst.Type().Elem(), elemPtr)
+	return reflect.NewAt(dst.Type().Elem(), elemPtr).Elem()
 }
 
+// ReflectMapAssign assigns a key to a map and returns the value.
+//
+// The returned value should satisfy CanSet().
+//
 //go:nosplit
 func ReflectMapAssign(dst reflect.Value, key any) reflect.Value {
 	if dst.Kind() != reflect.Map {
@@ -61,7 +69,7 @@ func ReflectMapAssign(dst reflect.Value, key any) reflect.Value {
 	keyType := dst.Type().Key()
 	if keyType.Kind() == dst.Type().Elem().Kind() {
 		elemPtr := mapassign(mType, m, EfaceOf(key).Data)
-		return reflect.NewAt(dst.Type().Elem(), elemPtr)
+		return reflect.NewAt(dst.Type().Elem(), elemPtr).Elem()
 	}
 
 	// slow path (any / interface key)
@@ -77,5 +85,5 @@ func ReflectMapAssign(dst reflect.Value, key any) reflect.Value {
 	keyPtr := reflect.New(keyType)
 	keyPtr.Elem().Set(keyVal)
 	elemPtr := mapassign(mType, m, keyPtr.UnsafePointer())
-	return reflect.NewAt(dst.Type().Elem(), elemPtr)
+	return reflect.NewAt(dst.Type().Elem(), elemPtr).Elem()
 }
