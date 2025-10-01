@@ -49,6 +49,8 @@ func ReflectInitSlice(dst reflect.Value, len, cap int) {
 	s.cap = cap
 }
 
+// FIXME: not working for pointer types
+//
 //go:nosplit
 func ReflectSetSliceAt(dst reflect.Value, index int, value reflect.Value) {
 	if dst.Kind() != reflect.Slice {

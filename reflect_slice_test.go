@@ -456,7 +456,9 @@ func TestSetSliceAt(t *testing.T) {
 
 		ReflectSetSliceAt(v, 0, reflect.ValueOf(&newVal))
 
-		if s[0] != &newVal || *s[0] != 100 {
+		if s[0] != &newVal {
+			t.Errorf("Expected s[0] to point to newVal, got %p", s[0])
+		} else if *s[0] != 100 {
 			t.Errorf("Expected s[0] to point to newVal (100), got %d", *s[0])
 		}
 		if s[1] != &b || s[2] != &c {
