@@ -43,11 +43,6 @@ func ReflectValueSet[T any](v reflect.Value, x T) {
 }
 
 //go:nosplit
-func ReflectSetZero(v reflect.Value) {
-	typedmemclr(ReflectValueType(v), ReflectValueData(v))
-}
-
-//go:nosplit
 func ReflectInitPtr(v reflect.Value) {
 	t := v.Type()
 	switch t.Kind() {
