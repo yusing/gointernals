@@ -523,6 +523,10 @@ func TestReflectInitPtr(t *testing.T) {
 		if *p != 0 {
 			t.Errorf("Expected *p to be 0 (zero value), got %d", *p)
 		}
+		*p = 123
+		if *p != 123 {
+			t.Errorf("Expected *p to be 123 after write, got %d", *p)
+		}
 	})
 
 	t.Run("pointer to string", func(t *testing.T) {
@@ -534,6 +538,10 @@ func TestReflectInitPtr(t *testing.T) {
 		}
 		if *p != "" {
 			t.Errorf("Expected *p to be empty string (zero value), got %s", *p)
+		}
+		*p = "updated"
+		if *p != "updated" {
+			t.Errorf("Expected *p to be updated after write, got %s", *p)
 		}
 	})
 
@@ -551,6 +559,11 @@ func TestReflectInitPtr(t *testing.T) {
 		if p.A != 0 || p.B != "" {
 			t.Errorf("Expected *p to be zero value {0, ''}, got {%d, %s}", p.A, p.B)
 		}
+		p.A = 7
+		p.B = "x"
+		if p.A != 7 || p.B != "x" {
+			t.Errorf("Expected *p to be {7, x} after write, got {%d, %s}", p.A, p.B)
+		}
 	})
 
 	t.Run("pointer to slice", func(t *testing.T) {
@@ -562,6 +575,10 @@ func TestReflectInitPtr(t *testing.T) {
 		}
 		if *p != nil {
 			t.Errorf("Expected *p to be nil slice (zero value), got %v", *p)
+		}
+		*p = []int{4, 5}
+		if len(*p) != 2 || (*p)[0] != 4 || (*p)[1] != 5 {
+			t.Errorf("Expected *p to be [4 5] after write, got %v", *p)
 		}
 	})
 
@@ -575,6 +592,10 @@ func TestReflectInitPtr(t *testing.T) {
 		if *p != nil {
 			t.Errorf("Expected *p to be nil map (zero value), got %v", *p)
 		}
+		*p = map[string]int{"a": 1}
+		if (*p)["a"] != 1 {
+			t.Errorf("Expected (*p)[a] to be 1 after write, got %d", (*p)["a"])
+		}
 	})
 
 	t.Run("pointer to bool", func(t *testing.T) {
@@ -586,6 +607,10 @@ func TestReflectInitPtr(t *testing.T) {
 		}
 		if *p != false {
 			t.Errorf("Expected *p to be false (zero value), got %v", *p)
+		}
+		*p = true
+		if *p != true {
+			t.Errorf("Expected *p to be true after write, got %v", *p)
 		}
 	})
 
@@ -599,6 +624,10 @@ func TestReflectInitPtr(t *testing.T) {
 		if *p != 0.0 {
 			t.Errorf("Expected *p to be 0.0 (zero value), got %f", *p)
 		}
+		*p = 1.23
+		if *p != 1.23 {
+			t.Errorf("Expected *p to be 1.23 after write, got %f", *p)
+		}
 	})
 
 	t.Run("pointer to pointer", func(t *testing.T) {
@@ -610,6 +639,11 @@ func TestReflectInitPtr(t *testing.T) {
 		}
 		if *p != nil {
 			t.Errorf("Expected *p to be nil (zero value for *int), got %v", *p)
+		}
+		x := 9
+		*p = &x
+		if **p != 9 {
+			t.Errorf("Expected **p to be 9 after write, got %d", **p)
 		}
 	})
 

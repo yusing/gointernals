@@ -450,6 +450,27 @@ func TestReflectStrMapAssign_MultipleKeys(t *testing.T) {
 	}
 }
 
+func TestReflectStrMapAssign_MapStringString(t *testing.T) {
+	var m map[string]string
+	{
+		mv := reflect.ValueOf(&m).Elem()
+
+		ReflectInitMap(mv, 0)
+
+		ev := ReflectStrMapAssign(mv, "p")
+		ev.Elem().SetString("10")
+	}
+	if got := m["p"]; got != "10" {
+		t.Fatalf("want 10, got %s", got)
+	}
+
+	for _, v := range m {
+		if v != "10" {
+			t.Fatalf("want 10, got %s", v)
+		}
+	}
+}
+
 func TestReflectStrMapAssign_PanicOnNilMap(t *testing.T) {
 	var m map[string]int // nil map
 	mv := reflect.ValueOf(&m).Elem()
