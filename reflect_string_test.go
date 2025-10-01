@@ -38,6 +38,17 @@ func TestReflectStrToNumBool_Ints(t *testing.T) {
 			t.Fatal("expected range error, got nil")
 		}
 	})
+
+	t.Run("negative to int16", func(t *testing.T) {
+		var v int16
+		rv := reflect.ValueOf(&v).Elem()
+		if err := ReflectStrToNumBool(rv, "-32768"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if v != math.MinInt16 {
+			t.Fatalf("want %d, got %d", int16(math.MinInt16), v)
+		}
+	})
 }
 
 func TestReflectStrToNumBool_Uints(t *testing.T) {
@@ -112,18 +123,39 @@ func TestReflectStrToNumBool_Floats(t *testing.T) {
 	})
 }
 
-func TestReflectStrToNumBool_PanicsOnInvalidDstKind(t *testing.T) {
-	t.Run("bool dst panics", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Fatal("expected panic for bool destination")
-			}
-		}()
+func TestReflectStrToNumBool_Bool(t *testing.T) {
+	t.Run("true parse", func(t *testing.T) {
 		var v bool
 		rv := reflect.ValueOf(&v).Elem()
-		_ = ReflectStrToNumBool(rv, "true")
+		if err := ReflectStrToNumBool(rv, "true"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if v != true {
+			t.Fatalf("want true, got %v", v)
+		}
 	})
 
+	t.Run("false parse", func(t *testing.T) {
+		var v bool
+		rv := reflect.ValueOf(&v).Elem()
+		if err := ReflectStrToNumBool(rv, "false"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if v != false {
+			t.Fatalf("want false, got %v", v)
+		}
+	})
+
+	t.Run("invalid bool parse error", func(t *testing.T) {
+		var v bool
+		rv := reflect.ValueOf(&v).Elem()
+		if err := ReflectStrToNumBool(rv, "not-bool"); err == nil {
+			t.Fatal("expected parse error, got nil")
+		}
+	})
+}
+
+func TestReflectStrToNumBool_PanicsOnInvalidDstKind(t *testing.T) {
 	t.Run("string dst panics", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {

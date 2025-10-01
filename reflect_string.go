@@ -12,7 +12,7 @@ import (
 //go:nosplit
 func ReflectStrToNumBool(dst reflect.Value, src string) error {
 	dstTKind := dst.Kind()
-	if !ReflectIsNumeric(dst) || dstTKind == reflect.Bool {
+	if !(ReflectIsNumeric(dst) || dstTKind == reflect.Bool) {
 		panic(fmt.Errorf("gointernals.ReflectStrToNumBool: invalid destination type %s", dst.Type()))
 	}
 	switch {
