@@ -85,3 +85,43 @@ func ReflectStrToNumBool(dst reflect.Value, src string) error {
 	}
 	return nil
 }
+
+var fmtStringerType = reflect.TypeFor[fmt.Stringer]()
+
+func ReflectToStr(v reflect.Value) string {
+	switch {
+	case ReflectCanInt(v):
+		switch abi.Kind(v.Kind()).Size() {
+		case 8:
+			return strconv.FormatInt(ReflectValueAs[int64](v), 10)
+		case 4:
+			return strconv.FormatInt(int64(ReflectValueAs[int32](v)), 10)
+		case 2:
+			return strconv.FormatInt(int64(ReflectValueAs[int16](v)), 10)
+		case 1:
+			return strconv.FormatInt(int64(ReflectValueAs[int8](v)), 10)
+		}
+	case ReflectCanUint(v):
+		switch abi.Kind(v.Kind()).Size() {
+		case 8:
+			return strconv.FormatUint(ReflectValueAs[uint64](v), 10)
+		case 4:
+			return strconv.FormatUint(uint64(ReflectValueAs[uint32](v)), 10)
+		case 2:
+			return strconv.FormatUint(uint64(ReflectValueAs[uint16](v)), 10)
+		case 1:
+			return strconv.FormatUint(uint64(ReflectValueAs[uint8](v)), 10)
+		}
+	case v.Kind() == reflect.Float32:
+		return strconv.FormatFloat(float64(ReflectValueAs[float32](v)), 'f', -1, 32)
+	case v.Kind() == reflect.Float64:
+		return strconv.FormatFloat(ReflectValueAs[float64](v), 'f', -1, 64)
+	case v.Kind() == reflect.Bool:
+		return strconv.FormatBool(ReflectValueAs[bool](v))
+	case v.Type().Implements(fmtStringerType):
+		return v.MethodByName("String").Call(nil)[0].String()
+	}
+
+	// fallback to reflect.Value.String
+	return v.String()
+}

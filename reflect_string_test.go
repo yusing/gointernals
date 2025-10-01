@@ -3,6 +3,7 @@
 package gointernals
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"testing"
@@ -165,5 +166,68 @@ func TestReflectStrToNumBool_PanicsOnInvalidDstKind(t *testing.T) {
 		var v string
 		rv := reflect.ValueOf(&v).Elem()
 		_ = ReflectStrToNumBool(rv, "123")
+	})
+}
+func TestReflectToStr_NumericAndBool(t *testing.T) {
+	tests := []struct {
+		name string
+		in   any
+		want string
+	}{
+		{"int", int(42), "42"},
+		{"int8", int8(-8), "-8"},
+		{"int16", int16(123), "123"},
+		{"int32", int32(-214), "-214"},
+		{"int64", int64(922), "922"},
+
+		{"uint", uint(7), "7"},
+		{"uint8", uint8(255), "255"},
+		{"uint16", uint16(65535), "65535"},
+		{"uint32", uint32(429), "429"},
+		{"uint64", uint64(900), "900"},
+
+		{"float32_simple", float32(3.5), "3.5"},
+		{"float32_trim_trailing_zeros", float32(2.0), "2"},
+		{"float64_simple", float64(1.25), "1.25"},
+		{"float64_trim_trailing_zeros", float64(10.0), "10"},
+
+		{"bool_true", true, "true"},
+		{"bool_false", false, "false"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := reflect.ValueOf(tt.in)
+			got := ReflectToStr(v)
+			if got != tt.want {
+				t.Fatalf("want %q, got %q (kind=%v, type=%v)", tt.want, got, v.Kind(), v.Type())
+			}
+		})
+	}
+}
+
+type valueStringer int
+
+func (v valueStringer) String() string { return fmt.Sprintf("VS:%d", v) }
+
+type pointerStringer struct{ n int }
+
+func (p *pointerStringer) String() string { return fmt.Sprintf("PS:%d", p.n) }
+
+func TestReflectToStr_Stringer(t *testing.T) {
+	t.Run("value receiver stringer", func(t *testing.T) {
+		var s valueStringer = 5
+		v := reflect.ValueOf(s)
+		if got, want := ReflectToStr(v), "VS:5"; got != want {
+			t.Fatalf("want %q, got %q", want, got)
+		}
+	})
+
+	t.Run("pointer receiver stringer", func(t *testing.T) {
+		s := &pointerStringer{n: 3}
+		v := reflect.ValueOf(s)
+		if got, want := ReflectToStr(v), "PS:3"; got != want {
+			t.Fatalf("want %q, got %q", want, got)
+		}
 	})
 }

@@ -43,6 +43,11 @@ func ReflectValueSet[T any](v reflect.Value, x T) {
 }
 
 //go:nosplit
+func ReflectValueAs[T any](v reflect.Value) T {
+	return *(*T)(abi.NoEscape(ReflectValueData(v)))
+}
+
+//go:nosplit
 func ReflectInitPtr(v reflect.Value) {
 	t := v.Type()
 	switch t.Kind() {
@@ -59,6 +64,8 @@ func ReflectInitPtr(v reflect.Value) {
 // ReflectShallowCopy copies the value of src to dst.
 // It will panic if the types are not compatible.
 // Note: this function does not update type and flag fields in dst.
+//
+// FIXME: segfault
 //
 //go:nosplit
 func ReflectShallowCopy(dst, src reflect.Value) {
