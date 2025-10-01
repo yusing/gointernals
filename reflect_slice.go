@@ -20,7 +20,7 @@ func ReflectMakeSlice(typ reflect.Type, len, cap int) Slice {
 		panic("gointernals.ReflectMakeSlice: len > cap")
 	}
 	return Slice{
-		ptr: reflect_unsafe_NewArray(EfaceOf(typ.Elem()).Type, cap),
+		ptr: reflect_unsafe_NewArray(ReflectTypeToABIType(typ.Elem()), cap),
 		len: len,
 		cap: cap,
 	}
@@ -38,13 +38,13 @@ func ReflectInitSlice(dst reflect.Value, len, cap int) {
 	if s.ptr != nil {
 		s.len = len
 		if s.cap < cap {
-			*s = reflect_growslice(EfaceOf(dst.Type().Elem()).Type, *s, cap-s.cap)
+			*s = reflect_growslice(ReflectTypeToABIType(dst.Type().Elem()), *s, cap-s.cap)
 		}
 		return
 	}
 
 	// dst is nil, assign new slice
-	s.ptr = reflect_unsafe_NewArray(EfaceOf(dst.Type().Elem()).Type, cap)
+	s.ptr = reflect_unsafe_NewArray(ReflectTypeToABIType(dst.Type().Elem()), cap)
 	s.len = len
 	s.cap = cap
 }
