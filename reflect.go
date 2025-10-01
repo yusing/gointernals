@@ -69,7 +69,7 @@ func ReflectInitPtr(v reflect.Value) {
 func ReflectShallowCopy(dst, src reflect.Value) {
 	dstT, srcT := ReflectValueType(dst), ReflectValueType(src)
 	// pointer to same type will always be the same pointer
-	if dstT == srcT {
+	if dstT == srcT || dst.Type().AssignableTo(src.Type()) {
 		typedmemmove(dstT, ReflectValueData(dst), ReflectValueData(src))
 		return
 	}
