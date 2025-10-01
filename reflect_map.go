@@ -27,9 +27,55 @@ func ReflectInitMap(dst reflect.Value, len int) {
 	ReflectValueSet(dst, newMap)
 }
 
-func ReflectStrMapAssign(dst reflect.Value, key string) reflect.Value {
+//go:nosplit
+func ReflectMapUnpack(dst reflect.Value) (*Map, *MapType) {
 	eface := EfaceOf(dst.Interface())
-	m, mType := (*Map)(unsafe.Pointer(eface.Data)), (*MapType)(abi.NoEscape(unsafe.Pointer(eface.Type)))
+	return (*Map)(unsafe.Pointer(eface.Data)), (*MapType)(abi.NoEscape(unsafe.Pointer(eface.Type)))
+}
+
+//go:nosplit
+func ReflectStrMapAssign(dst reflect.Value, key string) reflect.Value {
+	if dst.Kind() != reflect.Map || dst.Type().Key().Kind() != reflect.String {
+		panic("gointernals.ReflectStrMapAssign of non map or non-string map type")
+	}
+	if dst.IsNil() {
+		panic("gointernals.ReflectStrMapAssign of nil map")
+	}
+
+	m, mType := ReflectMapUnpack(dst)
 	elemPtr := mapassign_faststr(mType, m, key)
+	return reflect.NewAt(dst.Type().Elem(), elemPtr)
+}
+
+//go:nosplit
+func ReflectMapAssign(dst reflect.Value, key any) reflect.Value {
+	if dst.Kind() != reflect.Map {
+		panic("gointernals.ReflectMapAssign of non map type")
+	}
+	if dst.IsNil() {
+		panic("gointernals.ReflectMapAssign of nil map")
+	}
+
+	// fast path (same type)
+	m, mType := ReflectMapUnpack(dst)
+	keyType := dst.Type().Key()
+	if keyType.Kind() == dst.Type().Elem().Kind() {
+		elemPtr := mapassign(mType, m, EfaceOf(key).Data)
+		return reflect.NewAt(dst.Type().Elem(), elemPtr)
+	}
+
+	// slow path (any / interface key)
+	keyVal := reflect.ValueOf(key)
+	// Ensure key is of the exact map key type
+	if !keyVal.Type().AssignableTo(keyType) {
+		if keyVal.Type().ConvertibleTo(keyType) {
+			keyVal = keyVal.Convert(keyType)
+		} else {
+			panic("gointernals.ReflectMapAssign key not assignable to map key type")
+		}
+	}
+	keyPtr := reflect.New(keyType)
+	keyPtr.Elem().Set(keyVal)
+	elemPtr := mapassign(mType, m, keyPtr.UnsafePointer())
 	return reflect.NewAt(dst.Type().Elem(), elemPtr)
 }

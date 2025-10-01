@@ -483,3 +483,112 @@ func TestReflectStrMapAssign_PanicOnNilMap(t *testing.T) {
 	}()
 	_ = ReflectStrMapAssign(mv, "x")
 }
+
+func TestReflectMapAssign_BasicIntMap(t *testing.T) {
+	var m map[int]int
+	mv := reflect.ValueOf(&m).Elem()
+
+	ReflectInitMap(mv, 0)
+
+	ev := ReflectMapAssign(mv, 1)
+	if ev.Kind() != reflect.Pointer || ev.Elem().Kind() != reflect.Int {
+		t.Fatalf("unexpected element value kind: %v -> %v", ev.Kind(), ev.Elem().Kind())
+	}
+	ev.Elem().SetInt(42)
+	if got := m[1]; got != 42 {
+		t.Fatalf("want 42, got %d", got)
+	}
+
+	// overwrite
+	ev2 := ReflectMapAssign(mv, 1)
+	ev2.Elem().SetInt(7)
+	if got := m[1]; got != 7 {
+		t.Fatalf("want 7, got %d", got)
+	}
+}
+
+func TestReflectMapAssign_StringKeyViaAny(t *testing.T) {
+	var m map[string]int
+	mv := reflect.ValueOf(&m).Elem()
+
+	ReflectInitMap(mv, 0)
+
+	ev := ReflectMapAssign(mv, "k")
+	ev.Elem().SetInt(3)
+	if got := m["k"]; got != 3 {
+		t.Fatalf("want 3, got %d", got)
+	}
+}
+
+func TestReflectMapAssign_StructKeyValue(t *testing.T) {
+	type K struct{ A int }
+	type V struct{ S string }
+	var m map[K]V
+	mv := reflect.ValueOf(&m).Elem()
+
+	ReflectInitMap(mv, 0)
+
+	key := K{A: 9}
+	ev := ReflectMapAssign(mv, key)
+	if ev.Kind() != reflect.Pointer || ev.Elem().Kind() != reflect.Struct {
+		t.Fatalf("unexpected kind: %v -> %v", ev.Kind(), ev.Elem().Kind())
+	}
+	ev.Elem().Field(0).SetString("x")
+	if got := m[key]; got != (V{S: "x"}) {
+		t.Fatalf("unexpected value: %+v", got)
+	}
+}
+
+func TestReflectMapAssign_InterfaceKey(t *testing.T) {
+	var m map[any]string
+	mv := reflect.ValueOf(&m).Elem()
+
+	ReflectInitMap(mv, 0)
+
+	key1 := 10
+	key2 := "s"
+	ReflectMapAssign(mv, key1).Elem().SetString("ten")
+	ReflectMapAssign(mv, key2).Elem().SetString("str")
+
+	if m[10] != "ten" || m["s"] != "str" {
+		t.Fatalf("unexpected map contents: %#v", m)
+	}
+}
+
+func TestReflectMapAssign_PointerKey(t *testing.T) {
+	var m map[*int]float64
+	mv := reflect.ValueOf(&m).Elem()
+
+	ReflectInitMap(mv, 0)
+
+	k := new(int)
+	*k = 5
+	ReflectMapAssign(mv, k).Elem().SetFloat(1.5)
+	if m[k] != 1.5 {
+		t.Fatalf("want 1.5, got %v", m[k])
+	}
+}
+
+func TestReflectMapAssign_PanicOnNilMap(t *testing.T) {
+	var m map[int]int
+	mv := reflect.ValueOf(&m).Elem()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("expected panic on nil map assign")
+		}
+	}()
+	_ = ReflectMapAssign(mv, 1)
+}
+
+func TestReflectMapAssign_PanicOnNonMap(t *testing.T) {
+	i := 0
+	iv := reflect.ValueOf(&i).Elem()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("expected panic on non-map value")
+		}
+	}()
+	_ = ReflectMapAssign(iv, 1)
+}

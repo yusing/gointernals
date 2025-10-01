@@ -203,6 +203,10 @@ func mapaccess2_faststr(t *MapType, m *Map, ky string) (unsafe.Pointer, bool)
 //go:noescape
 func mapassign_faststr(t *MapType, m *Map, s string) unsafe.Pointer
 
+//go:linkname mapassign runtime.mapassign
+//go:noescape
+func mapassign(t *MapType, m *Map, key unsafe.Pointer) unsafe.Pointer
+
 type (
 	StrMapGetFunc = func(m *Map, mType *MapType, key string) unsafe.Pointer
 	StrMapSetFunc = func(m *Map, mType *MapType, key string, value unsafe.Pointer)
