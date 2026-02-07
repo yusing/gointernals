@@ -9,7 +9,6 @@ import (
 	"github.com/yusing/gointernals/abi"
 )
 
-//go:nosplit
 func ReflectStrToNumBool(dst reflect.Value, src string) error {
 	dstTKind := dst.Kind()
 	if !(ReflectIsNumeric(dst) || dstTKind == reflect.Bool) {
