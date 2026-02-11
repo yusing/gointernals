@@ -89,6 +89,8 @@ var fmtStringerType = reflect.TypeFor[fmt.Stringer]()
 
 func ReflectToStr(v reflect.Value) string {
 	switch {
+	case v.Type().Implements(fmtStringerType):
+		return v.Interface().(fmt.Stringer).String()
 	case ReflectCanInt(v):
 		switch abi.Kind(v.Kind()).Size() {
 		case 8:
@@ -117,8 +119,6 @@ func ReflectToStr(v reflect.Value) string {
 		return strconv.FormatFloat(ReflectValueAs[float64](v), 'f', -1, 64)
 	case v.Kind() == reflect.Bool:
 		return strconv.FormatBool(ReflectValueAs[bool](v))
-	case v.Type().Implements(fmtStringerType):
-		return v.MethodByName("String").Call(nil)[0].String()
 	}
 
 	// fallback to reflect.Value.String
