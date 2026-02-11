@@ -49,9 +49,27 @@ func ReflectInitSlice(dst reflect.Value, len, cap int) {
 	s.cap = cap
 }
 
-// FIXME: not working for pointer types
+// reflectFlagIndir is the flagIndir bit in reflect.Value.flag.
+// When set, the ptr field points to the data; when unset, ptr IS the data.
+const reflectFlagIndir = uintptr(1 << 7)
+
+// reflectValueDataPtr returns a pointer to the actual data held by v.
+// Unlike ReflectValueData, this correctly handles non-indirect values
+// (pointers, maps, channels, funcs) where reflect.Value stores the
+// value directly in the ptr field rather than as a pointer to the data.
 //
 //go:nosplit
+func reflectValueDataPtr(v *reflect.Value) unsafe.Pointer {
+	// reflect.Value layout: [typ *abi.Type, ptr unsafe.Pointer, flag uintptr]
+	words := (*[3]uintptr)(unsafe.Pointer(v))
+	if words[2]&reflectFlagIndir != 0 {
+		// Indirect: ptr points to the data
+		return unsafe.Pointer(words[1])
+	}
+	// Direct: ptr IS the data, return address of the ptr field
+	return unsafe.Pointer(&words[1])
+}
+
 func ReflectSetSliceAt(dst reflect.Value, index int, value reflect.Value) {
 	if dst.Kind() != reflect.Slice {
 		panic("gointernals.ReflectSetSliceAt of non-slice type")
@@ -61,10 +79,21 @@ func ReflectSetSliceAt(dst reflect.Value, index int, value reflect.Value) {
 		panic("gointernals.ReflectSetSliceAt: index out of range")
 	}
 
-	elemT := ReflectTypeToABIType(dst.Type().Elem())
-	valT := ReflectTypeToABIType(value.Type())
-	if elemT.Size != valT.Size {
+	elemType := dst.Type().Elem()
+	elemDst := unsafe.Add(s.ptr, uintptr(index)*elemType.Size())
+
+	// Interface element types need special handling:
+	// the value's concrete type layout differs from eface/iface layout,
+	// so we delegate to reflect which handles the conversion correctly.
+	if elemType.Kind() == reflect.Interface {
+		reflect.NewAt(elemType, elemDst).Elem().Set(value)
+		return
+	}
+
+	if elemType.Size() != value.Type().Size() {
 		panic("gointernals.ReflectSetSliceAt: element type size mismatch")
 	}
-	typedmemmove(elemT, unsafe.Pointer(uintptr(s.ptr)+uintptr(index)*elemT.Size), ReflectValueData(value))
+	// Use reflectValueDataPtr to correctly handle both indirect and
+	// direct (pointer-like) values in reflect.Value.
+	typedmemmove(ReflectTypeToABIType(elemType), elemDst, reflectValueDataPtr(&value))
 }
