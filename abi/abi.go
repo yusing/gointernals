@@ -1,4 +1,4 @@
-//go:build go1.24 && go1.25 && !go1.26
+//go:build go1.24 && !go1.27
 
 package abi
 

@@ -1,13 +1,17 @@
-test-all: test-124 test-125
+test-all: test-124 test-125 test-126
 GOFLAGS=-ldflags=-checklinkname=0
 export GOFLAGS
 
 install-go:
 	@which go1.24.6 || (go install golang.org/dl/go1.24.6@latest && go1.24.6 download)
-	@which go1.25.1 || (go install golang.org/dl/go1.25.1@latest && go1.25.1 download)
+	@which go1.25.7 || (go install golang.org/dl/go1.25.7@latest && go1.25.7 download)
+	@which go1.26.0 || (go install golang.org/dl/go1.26.0@latest && go1.26.0 download)
 
 test-124:
 	go1.24.6 test -count=1 ./...
 
 test-125:
-	go1.25.1 test -count=1 ./...
+	go1.25.7 test -count=1 ./...
+
+test-126:
+	go1.26.0 test -count=1 ./...
